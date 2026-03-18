@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Royal Spin — 線上博弈娛樂城</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;background:#0A0A0A;color:#F0EDE5;overflow-x:hidden}
+
+/* NAV */
+.rs-nav{background:#111;border-bottom:1px solid rgba(255,100,0,0.3);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100}
+.rs-logo{font-size:21px;font-weight:600;letter-spacing:2px;color:#FF6400;text-shadow:0 0 20px rgba(255,100,0,0.4)}
+.rs-logo span{color:#F0EDE5;font-weight:400}
+.rs-navlinks{display:flex;gap:2px}
+.nav-a{display:flex;align-items:center;gap:6px;padding:6px 13px;border-radius:7px;font-size:13px;color:rgba(240,237,229,0.5);cursor:pointer;transition:all 0.18s;border:none;background:none;font-family:inherit}
+.nav-a:hover,.nav-a.active{color:#FF6400;background:rgba(255,100,0,0.1)}
+.nav-icon{width:14px;height:14px;flex-shrink:0}
+.rs-navbtns{display:flex;gap:8px}
+.btn-login{font-size:13px;padding:7px 18px;border:1px solid rgba(255,100,0,0.5);border-radius:7px;background:transparent;color:#FF6400;cursor:pointer;font-family:inherit;transition:all 0.15s}
+.btn-login:hover{background:rgba(255,100,0,0.08)}
+.btn-join{font-size:13px;padding:7px 18px;border-radius:7px;background:#FF6400;color:#0A0A0A;border:none;cursor:pointer;font-weight:600;font-family:inherit;box-shadow:0 0 20px rgba(255,100,0,0.4);transition:all 0.15s}
+.btn-join:hover{background:#FF7720;box-shadow:0 0 30px rgba(255,100,0,0.6)}
+
+/* HERO */
+.rs-hero{position:relative;padding:60px 28px 52px;overflow:hidden;background:#0A0A0A}
+.hero-glow-a{position:absolute;width:600px;height:600px;border-radius:50%;background:rgba(255,80,0,0.09);top:-150px;right:60px;pointer-events:none;filter:blur(70px)}
+.hero-glow-b{position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,140,0,0.06);bottom:-80px;left:40px;pointer-events:none;filter:blur(50px)}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,100,0,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,100,0,0.035) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
+.rs-hero-inner{max-width:960px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;position:relative;z-index:1}
+.hero-pill{display:inline-flex;align-items:center;gap:7px;font-size:11px;letter-spacing:2px;color:#FF6400;text-transform:uppercase;margin-bottom:14px;background:rgba(255,100,0,0.1);border:1px solid rgba(255,100,0,0.25);padding:5px 12px;border-radius:20px}
+.pill-dot{width:6px;height:6px;border-radius:50%;background:#FF6400;animation:pd 1.5s infinite}
+@keyframes pd{0%,100%{opacity:1;box-shadow:0 0 6px #FF6400}50%{opacity:0.3;box-shadow:none}}
+.hero-h1{font-size:42px;font-weight:700;line-height:1.18;color:#F0EDE5;margin-bottom:16px;text-shadow:0 2px 20px rgba(0,0,0,0.5)}
+.hero-h1 em{color:#FF6400;font-style:normal;text-shadow:0 0 30px rgba(255,100,0,0.5)}
+.hero-sub{font-size:15px;color:rgba(240,237,229,0.5);line-height:1.8;margin-bottom:28px;max-width:400px}
+.hero-ctas{display:flex;gap:12px;margin-bottom:32px}
+.cta-primary{padding:13px 30px;background:#FF6400;color:#0A0A0A;border:none;border-radius:9px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 0 28px rgba(255,100,0,0.45),0 4px 16px rgba(0,0,0,0.3);transition:all 0.15s}
+.cta-primary:hover{background:#FF7720;box-shadow:0 0 40px rgba(255,100,0,0.65),0 4px 16px rgba(0,0,0,0.3);transform:translateY(-1px)}
+.cta-ghost{padding:13px 26px;background:transparent;color:#FF6400;border:1px solid rgba(255,100,0,0.4);border-radius:9px;font-size:15px;cursor:pointer;font-family:inherit;transition:all 0.15s}
+.cta-ghost:hover{background:rgba(255,100,0,0.08);transform:translateY(-1px)}
+.hero-stats{display:flex;gap:28px}
+.hstat{padding-left:14px;border-left:2px solid rgba(255,100,0,0.5)}
+.hstat-n{font-size:24px;font-weight:700;color:#FF6400;text-shadow:0 0 16px rgba(255,100,0,0.4)}
+.hstat-l{font-size:11px;color:rgba(240,237,229,0.4);margin-top:3px}
+
+/* TICKER */
+.hero-right{background:rgba(255,255,255,0.03);border:1px solid rgba(255,100,0,0.2);border-radius:16px;padding:22px;position:relative;overflow:hidden}
+.hero-right::before{content:'';position:absolute;top:-50px;right:-50px;width:140px;height:140px;border-radius:50%;background:rgba(255,100,0,0.1);filter:blur(35px);pointer-events:none}
+.tlabel{font-size:11px;letter-spacing:1.5px;color:rgba(255,100,0,0.7);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.tdot{width:6px;height:6px;border-radius:50%;background:#FF6400;animation:pd 1.5s infinite}
+.titem{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:rgba(255,255,255,0.04);border-radius:9px;border:1px solid rgba(255,255,255,0.06);margin-bottom:8px;transition:border-color 0.2s}
+.titem:last-child{margin-bottom:0}
+.titem:hover{border-color:rgba(255,100,0,0.3)}
+.tu{font-size:13px;color:rgba(240,237,229,0.75);font-weight:500}
+.tg{font-size:11px;color:rgba(240,237,229,0.35);margin-top:3px}
+.ta{font-size:15px;font-weight:600;color:#4EC994;text-shadow:0 0 12px rgba(78,201,148,0.35)}
+
+/* MARQUEE */
+.rs-mq{background:#0D0D0D;border-top:1px solid rgba(255,100,0,0.12);border-bottom:1px solid rgba(255,100,0,0.12);padding:10px 0;overflow:hidden}
+.mq-inner{display:flex;gap:52px;white-space:nowrap;animation:mqa 22s linear infinite}
+@keyframes mqa{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.mqi{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(240,237,229,0.4)}
+.mqd{width:5px;height:5px;border-radius:50%;background:#FF6400;box-shadow:0 0 4px #FF6400;flex-shrink:0}
+
+/* SECTIONS */
+.rs-sec{max-width:960px;margin:0 auto;padding:28px 28px 36px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sec-title{font-size:19px;font-weight:600;color:#F0EDE5;display:flex;align-items:center;gap:9px}
+.sec-bar{width:3px;height:20px;background:linear-gradient(180deg,#FF6400,rgba(255,100,0,0.15));border-radius:2px;flex-shrink:0}
+.sec-title em{color:#FF6400;font-style:normal}
+.see-all{font-size:13px;color:rgba(255,100,0,0.7);border:none;background:none;cursor:pointer;font-family:inherit;transition:color 0.15s}
+.see-all:hover{color:#FF6400}
+
+/* TABS */
+.cat-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.ctab{display:flex;align-items:center;gap:5px;padding:7px 15px;border-radius:20px;font-size:13px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:rgba(240,237,229,0.45);cursor:pointer;font-family:inherit;transition:all 0.15s}
+.ctab.active,.ctab:hover{background:rgba(255,100,0,0.12);color:#FF6400;border-color:rgba(255,100,0,0.4);box-shadow:0 0 10px rgba(255,100,0,0.08)}
+.ci{width:13px;height:13px;flex-shrink:0}
+
+/* GAMES */
+.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.gcard{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden;cursor:pointer;transition:all 0.22s;position:relative}
+.gcard:hover{border-color:rgba(255,100,0,0.55);transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,0.5),0 0 20px rgba(255,100,0,0.1)}
+.gthumb{height:100px;display:flex;align-items:center;justify-content:center;font-size:40px;position:relative}
+.g1{background:linear-gradient(135deg,#1A1200,#2A1800)}
+.g2{background:linear-gradient(135deg,#1A0800,#2A1000)}
+.g3{background:linear-gradient(135deg,#0A0A1A,#14142A)}
+.g4{background:linear-gradient(135deg,#0A100A,#101A10)}
+.g5{background:linear-gradient(135deg,#100A0A,#1A1010)}
+.gbadge{position:absolute;top:8px;left:8px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:5px}
+.ghot{background:rgba(163,45,45,0.9);color:#F09595;border:1px solid rgba(224,75,74,0.3)}
+.gnew{background:rgba(24,95,165,0.9);color:#85B7EB;border:1px solid rgba(55,138,221,0.3)}
+.grtp{background:rgba(15,110,86,0.9);color:#5DCAA5;border:1px solid rgba(29,158,117,0.3)}
+.ginfo{padding:11px 13px}
+.gname{font-size:14px;font-weight:600;color:#F0EDE5}
+.gmeta{font-size:11px;color:rgba(240,237,229,0.35);margin-top:3px}
+
+/* PROMOS */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.pcard{background:rgba(255,255,255,0.03);border:1px solid rgba(255,100,0,0.15);border-radius:14px;padding:22px;cursor:pointer;transition:all 0.22s;position:relative;overflow:hidden}
+.pcard::before{content:'';position:absolute;top:-35px;right:-35px;width:90px;height:90px;border-radius:50%;background:rgba(255,100,0,0.08);filter:blur(25px);pointer-events:none}
+.pcard:hover{border-color:rgba(255,100,0,0.5);box-shadow:0 8px 28px rgba(0,0,0,0.4),0 0 24px rgba(255,100,0,0.07);transform:translateY(-2px)}
+.ptag{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#FF6400;margin-bottom:8px;font-weight:600}
+.ptitle{font-size:17px;font-weight:600;color:#F0EDE5;margin-bottom:8px}
+.pdesc{font-size:13px;color:rgba(240,237,229,0.45);line-height:1.65;margin-bottom:16px}
+.cdrow{display:flex;gap:7px;align-items:center}
+.cdseg{background:rgba(255,100,0,0.1);border:1px solid rgba(255,100,0,0.25);border-radius:7px;padding:5px 10px;text-align:center}
+.cdnum{font-size:17px;font-weight:600;color:#FF6400;font-family:'SF Mono','Fira Code',monospace;display:block;text-shadow:0 0 12px rgba(255,100,0,0.4)}
+.cdlbl{font-size:10px;color:rgba(240,237,229,0.3)}
+.cdsep{font-size:18px;color:rgba(255,100,0,0.4);align-self:flex-start;padding-top:4px}
+
+/* VIP */
+.rs-vip{position:relative;overflow:hidden;border-top:1px solid rgba(255,100,0,0.15);border-bottom:1px solid rgba(255,100,0,0.15);padding:40px 28px}
+.vip-glow{position:absolute;inset:0;background:radial-gradient(ellipse 50% 100% at 50% 50%,rgba(255,80,0,0.07),transparent 70%);pointer-events:none}
+.vip-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;position:relative;z-index:1}
+.vip-lbl{font-size:11px;letter-spacing:2px;color:#FF6400;text-transform:uppercase;margin-bottom:7px}
+.vip-h{font-size:26px;font-weight:700;color:#F0EDE5;margin-bottom:7px}
+.vip-sub{font-size:14px;color:rgba(240,237,229,0.45)}
+.vtiers{display:flex;gap:9px;flex-wrap:wrap}
+.vt{display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:9px;border:1px solid;font-size:12px;font-weight:600;transition:all 0.2s;cursor:default}
+.vt:hover{transform:translateY(-2px)}
+.vtb{border-color:rgba(180,110,60,0.4);color:#C07840;background:rgba(180,110,60,0.08)}
+.vts{border-color:rgba(170,170,170,0.35);color:#AAAAAA;background:rgba(170,170,170,0.07)}
+.vtg{border-color:rgba(255,100,0,0.45);color:#FF6400;background:rgba(255,100,0,0.1);box-shadow:0 0 12px rgba(255,100,0,0.08)}
+.vtp{border-color:rgba(140,190,240,0.35);color:#8AB8E8;background:rgba(140,190,240,0.07)}
+.vtd{border-color:rgba(160,220,255,0.45);color:#90D0FF;background:rgba(160,220,255,0.08);box-shadow:0 0 12px rgba(160,220,255,0.07)}
+.vdot{width:8px;height:8px;border-radius:50%;background:currentColor;opacity:0.85;box-shadow:0 0 5px currentColor}
+
+/* FOOTER */
+.rs-foot{background:#080808;border-top:1px solid rgba(255,100,0,0.1);padding:32px 28px 22px}
+.foot-inner{max-width:960px;margin:0 auto}
+.ftop{display:flex;gap:48px;flex-wrap:wrap;margin-bottom:24px}
+.fct{font-size:12px;font-weight:600;color:#FF6400;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px}
+.fcol a{display:block;font-size:13px;color:rgba(240,237,229,0.3);margin-bottom:7px;text-decoration:none;transition:color 0.15s}
+.fcol a:hover{color:rgba(240,237,229,0.65)}
+.fbot{border-top:1px solid rgba(240,237,229,0.06);padding-top:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.fleg{font-size:11px;color:rgba(240,237,229,0.2);line-height:1.7}
+.rgb{display:flex;align-items:center;gap:7px;font-size:11px;color:rgba(240,237,229,0.28);border:1px solid rgba(240,237,229,0.09);padding:7px 13px;border-radius:7px}
+
+.hr{border:none;border-top:1px solid rgba(255,255,255,0.05);margin:0}
+
+/* RESPONSIVE */
+@media(max-width:720px){
+  .rs-hero-inner{grid-template-columns:1fr}
+  .hero-right{display:none}
+  .rs-navlinks{display:none}
+  .hero-h1{font-size:30px}
+}
+</style>
+</head>
+<body>
+
+<nav class="rs-nav">
+  <div class="rs-logo">ROYAL<span>SPIN</span></div>
+  <div class="rs-navlinks">
+    <button class="nav-a active">
+      <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M7 1.5L12.5 6v7H9.5V9.5h-5V13H1.5V6z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+      首頁
+    </button>
+    <button class="nav-a">
+      <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="1.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1.5" y="8" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="8" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+      遊戲大廳
+    </button>
+    <button class="nav-a">
+      <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 7c0-1.4.9-2.5 2.5-2.5S9.5 5.6 9.5 7s-.9 2.5-2.5 2.5S4.5 8.4 4.5 7z" stroke="currentColor" stroke-width="1" fill="none"/><path d="M1.5 7h11M7 1.5v11" stroke="currentColor" stroke-width="1"/></svg>
+      運動博彩
+    </button>
+    <button class="nav-a">
+      <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M7 1.5l1.6 3.3 3.6.5-2.6 2.5.6 3.6L7 9.7l-3.2 1.7.6-3.6L1.8 5.3l3.6-.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+      優惠活動
+    </button>
+    <button class="nav-a">
+      <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M2.5 5.5h9M3.5 3.5h7l1 2H2.5l1-2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M4 5.5v5h6v-5" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M5.5 8h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      VIP 專區
+    </button>
+  </div>
+  <div class="rs-navbtns">
+    <button class="btn-login">登入</button>
+    <button class="btn-join">立即加入</button>
+  </div>
+</nav>
+
+<div class="rs-hero">
+  <div class="hero-glow-a"></div>
+  <div class="hero-glow-b"></div>
+  <div class="hero-grid"></div>
+  <div class="rs-hero-inner">
+    <div>
+      <div class="hero-pill"><span class="pill-dot"></span>2026 最熱門博弈平台</div>
+      <h1 class="hero-h1">娛樂從<em>王者</em>開始<br>贏在每一局</h1>
+      <p class="hero-sub">超過 2,000 款遊戲，真人荷官 24 小時在線，AI 個人化推薦，秒速存提款。</p>
+      <div class="hero-ctas">
+        <button class="cta-primary">立即免費加入 →</button>
+        <button class="cta-ghost">免費試玩</button>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat"><div class="hstat-n">2,400+</div><div class="hstat-l">款遊戲</div></div>
+        <div class="hstat"><div class="hstat-n">128 萬</div><div class="hstat-l">活躍玩家</div></div>
+        <div class="hstat"><div class="hstat-n">秒速</div><div class="hstat-l">即時出金</div></div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="tlabel"><span class="tdot"></span>即時大獎紀錄</div>
+      <div class="titem"><div><div class="tu">A***n</div><div class="tg">Fortune Tiger</div></div><div class="ta">+NT$128,400</div></div>
+      <div class="titem"><div><div class="tu">K***g</div><div class="tg">歐洲輪盤</div></div><div class="ta">+NT$56,200</div></div>
+      <div class="titem"><div><div class="tu">M***a</div><div class="tg">Gates of Olympus</div></div><div class="ta">+NT$34,800</div></div>
+      <div class="titem"><div><div class="tu">J***n</div><div class="tg">Aviator Crash</div></div><div class="ta">+NT$22,100</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="rs-mq">
+  <div class="mq-inner">
+    <span class="mqi"><span class="mqd"></span>W***i 剛贏得 NT$88,000</span>
+    <span class="mqi"><span class="mqd"></span>Lucky Spin 累積彩金 NT$4,200,000</span>
+    <span class="mqi"><span class="mqd"></span>C***y 剛在 Crash 贏得 NT$45,600</span>
+    <span class="mqi"><span class="mqd"></span>今日最大贏家 NT$320,000</span>
+    <span class="mqi"><span class="mqd"></span>新遊戲上架：Dragon Fortune</span>
+    <span class="mqi"><span class="mqd"></span>P***k 剛贏得 NT$17,300</span>
+    <span class="mqi"><span class="mqd"></span>W***i 剛贏得 NT$88,000</span>
+    <span class="mqi"><span class="mqd"></span>Lucky Spin 累積彩金 NT$4,200,000</span>
+    <span class="mqi"><span class="mqd"></span>C***y 剛在 Crash 贏得 NT$45,600</span>
+    <span class="mqi"><span class="mqd"></span>今日最大贏家 NT$320,000</span>
+    <span class="mqi"><span class="mqd"></span>新遊戲上架：Dragon Fortune</span>
+    <span class="mqi"><span class="mqd"></span>P***k 剛贏得 NT$17,300</span>
+  </div>
+</div>
+
+<div class="rs-sec">
+  <div class="sec-head">
+    <div class="sec-title"><span class="sec-bar"></span>熱門 <em>遊戲</em></div>
+    <button class="see-all">查看全部 →</button>
+  </div>
+  <div class="cat-tabs">
+    <button class="ctab active">
+      <svg class="ci" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="7.5" y="1" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="1" y="7.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="7.5" y="7.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.1"/></svg>全部
+    </button>
+    <button class="ctab">
+      <svg class="ci" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M4 6.5h5M6.5 4v5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>老虎機
+    </button>
+    <button class="ctab">
+      <svg class="ci" viewBox="0 0 13 13" fill="none"><rect x="1.5" y="2.5" width="10" height="8" rx="1.5" stroke="currentColor" stroke-width="1.1"/><path d="M4.5 6.5h4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>真人荷官
+    </button>
+    <button class="ctab">
+      <svg class="ci" viewBox="0 0 13 13" fill="none"><path d="M2 10L5 3l2 4 2-2 2 5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>桌遊
+    </button>
+    <button class="ctab">
+      <svg class="ci" viewBox="0 0 13 13" fill="none"><path d="M2 9c1-3 3-5 4.5-5S10 6 11 9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><circle cx="6.5" cy="5.5" r="1.2" stroke="currentColor" stroke-width="1.1"/></svg>捕魚
+    </button>
+    <button class="ctab">
+      <svg class="ci" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.1"/><path d="M4 6.5c0-1.5 1-2.5 2.5-2.5S9 5 9 6.5s-1 2.5-2.5 2.5S4 8 4 6.5z" stroke="currentColor" stroke-width="1" fill="none"/></svg>運彩
+    </button>
+  </div>
+  <div class="ggrid">
+    <div class="gcard">
+      <div class="gthumb g1"><span style="font-size:40px">🐯</span><div class="gbadge ghot">HOT</div></div>
+      <div class="ginfo"><div class="gname">Fortune Tiger</div><div class="gmeta">PG Soft · RTP 96.8%</div></div>
+    </div>
+    <div class="gcard">
+      <div class="gthumb g2"><span style="font-size:40px">🎡</span><div class="gbadge grtp">RTP 97.3%</div></div>
+      <div class="ginfo"><div class="gname">歐洲輪盤</div><div class="gmeta">Pragmatic · RTP 97.3%</div></div>
+    </div>
+    <div class="gcard">
+      <div class="gthumb g3"><span style="font-size:40px">⚡</span><div class="gbadge gnew">NEW</div></div>
+      <div class="ginfo"><div class="gname">Gates of Olympus</div><div class="gmeta">Pragmatic · RTP 96.5%</div></div>
+    </div>
+    <div class="gcard">
+      <div class="gthumb g4"><span style="font-size:40px">♠️</span></div>
+      <div class="ginfo"><div class="gname">德州撲克</div><div class="gmeta">GGPoker · Live</div></div>
+    </div>
+    <div class="gcard">
+      <div class="gthumb g5"><span style="font-size:40px">🚀</span><div class="gbadge ghot">HOT</div></div>
+      <div class="ginfo"><div class="gname">Aviator Crash</div><div class="gmeta">Spribe · 即時</div></div>
+    </div>
+  </div>
+</div>
+
+<hr class="hr">
+
+<div class="rs-sec">
+  <div class="sec-head">
+    <div class="sec-title"><span class="sec-bar"></span>限時 <em>優惠</em></div>
+    <button class="see-all">全部優惠 →</button>
+  </div>
+  <div class="pgrid">
+    <div class="pcard">
+      <div class="ptag">新會員限定</div>
+      <div class="ptitle">首存 100% 獎金</div>
+      <div class="pdesc">首次存款即享 100% 配對獎金，最高 NT$8,000，加碼 200 轉免費旋轉。</div>
+      <div class="cdrow">
+        <div class="cdseg"><span class="cdnum" id="cdh">23</span><span class="cdlbl">時</span></div>
+        <span class="cdsep">:</span>
+        <div class="cdseg"><span class="cdnum" id="cdm">47</span><span class="cdlbl">分</span></div>
+        <span class="cdsep">:</span>
+        <div class="cdseg"><span class="cdnum" id="cds">12</span><span class="cdlbl">秒</span></div>
+      </div>
+    </div>
+    <div class="pcard">
+      <div class="ptag">每日活動</div>
+      <div class="ptitle">每日 1% 無限返水</div>
+      <div class="pdesc">不論輸贏，每日投注額 1% 自動返還，隔日 10:00 存入帳戶，無上限。</div>
+      <div style="font-size:13px;color:#4EC994;margin-top:8px">永久有效，每日領取</div>
+    </div>
+    <div class="pcard">
+      <div class="ptag">週末限定</div>
+      <div class="ptitle">幸運輪盤大轉送</div>
+      <div class="pdesc">每週六日存款滿 NT$500 即可參加，最高獎品 NT$50,000 現金券。</div>
+      <div style="font-size:13px;color:rgba(255,100,0,0.8);margin-top:8px">本週六 20:00 開獎</div>
+    </div>
+  </div>
+</div>
+
+<div class="rs-vip">
+  <div class="vip-glow"></div>
+  <div class="vip-inner">
+    <div>
+      <div class="vip-lbl">會員尊享</div>
+      <div class="vip-h">VIP 五星榮譽計畫</div>
+      <div class="vip-sub">累積存款自動晉級，專屬禮遇即刻享有</div>
+    </div>
+    <div class="vtiers">
+      <div class="vt vtb"><span class="vdot"></span>Bronze</div>
+      <div class="vt vts"><span class="vdot"></span>Silver</div>
+      <div class="vt vtg"><span class="vdot"></span>Gold</div>
+      <div class="vt vtp"><span class="vdot"></span>Platinum</div>
+      <div class="vt vtd"><span class="vdot"></span>Diamond</div>
+    </div>
+    <button class="cta-primary">了解 VIP 福利 →</button>
+  </div>
+</div>
+
+<div class="rs-foot">
+  <div class="foot-inner">
+    <div class="ftop">
+      <div class="fcol"><div class="fct">遊戲</div><a href="#">老虎機</a><a href="#">真人荷官</a><a href="#">運動博彩</a><a href="#">彩票遊戲</a></div>
+      <div class="fcol"><div class="fct">帳戶</div><a href="#">存款</a><a href="#">提款</a><a href="#">優惠活動</a><a href="#">VIP 專區</a></div>
+      <div class="fcol"><div class="fct">支援</div><a href="#">線上客服</a><a href="#">常見問題</a><a href="#">使用條款</a><a href="#">隱私政策</a></div>
+      <div class="fcol"><div class="fct">支付方式</div><a href="#">LINE Pay</a><a href="#">街口支付</a><a href="#">USDT / BTC</a><a href="#">銀行轉帳</a></div>
+    </div>
+    <div class="fbot">
+      <div class="fleg">© 2026 Royal Spin · 18 歲以上方可參與 · 博弈可能造成財務損失，請理性參與<br>本平台持有合法博弈執照，受監管機構監督</div>
+      <div class="rgb">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="rgba(240,237,229,0.25)" stroke-width="1"/><path d="M7 4v4M7 9.5v.5" stroke="rgba(240,237,229,0.4)" stroke-width="1.2" stroke-linecap="round"/></svg>
+        負責任博弈
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var s = 23*3600 + 47*12;
+setInterval(function() {
+  s--; if(s < 0) s = 86399;
+  var h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sc = s%60;
+  document.getElementById('cdh').textContent = String(h).padStart(2,'0');
+  document.getElementById('cdm').textContent = String(m).padStart(2,'0');
+  document.getElementById('cds').textContent = String(sc).padStart(2,'0');
+}, 1000);
+
+document.querySelectorAll('.ctab').forEach(function(t) {
+  t.addEventListener('click', function() {
+    document.querySelectorAll('.ctab').forEach(function(x){ x.classList.remove('active'); });
+    t.classList.add('active');
+  });
+});
+
+document.querySelectorAll('.nav-a').forEach(function(t) {
+  t.addEventListener('click', function() {
+    document.querySelectorAll('.nav-a').forEach(function(x){ x.classList.remove('active'); });
+    t.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
