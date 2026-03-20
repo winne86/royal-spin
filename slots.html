@@ -162,8 +162,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-se
         <div class="pt-row"><span class="pt-syms">🍇🍇🍇</span><span class="pt-mult">× 10</span></div>
         <div class="pt-row"><span class="pt-syms">🍊🍊🍊</span><span class="pt-mult">× 6</span></div>
         <div class="pt-row"><span class="pt-syms">🍋🍋🍋</span><span class="pt-mult">× 4</span></div>
-        <div class="pt-row"><span class="pt-syms">🍒🍒🍒</span><span class="pt-mult">× 3</span></div>
-        <div class="pt-row"><span class="pt-syms">任意兩顆相同</span><span class="pt-mult">× 1.2</span></div>
+        <div class="pt-row"><span class="pt-syms">🍒🍒🍒</span><span class="pt-mult">× 4</span></div>
+        <div class="pt-row"><span class="pt-syms">任意兩顆相同</span><span class="pt-mult">× 1.5</span></div>
       </div>
     </div>
 
@@ -180,7 +180,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-se
 
 /* ── SLOT LOGIC ── */
 var SYMS = ['🍒','🍒','🍒','🍋','🍋','🍊','🍊','🍇','⭐','💎','7️⃣'];
-var PAYTABLE = {'🍒🍒🍒':3,'🍋🍋🍋':4,'🍊🍊🍊':6,'🍇🍇🍇':10,'⭐⭐⭐':20,'💎💎💎':50,'7️⃣7️⃣7️⃣':100};
+var PAYTABLE = {'🍒🍒🍒':4,'🍋🍋🍋':4,'🍊🍊🍊':6,'🍇🍇🍇':10,'⭐⭐⭐':20,'💎💎💎':50,'7️⃣7️⃣7️⃣':100};
 var spinning = false;
 var history = [];
 
@@ -283,7 +283,7 @@ function evaluate(results, bet){
     history.unshift('win');
   } else if(twoMatch){
     /* 兩顆相同：退回下注 + 小贏 20% */
-    winAmt = Math.round(bet * 1.2);
+    winAmt = Math.round(bet * 1.5);
     setBalance(getBalance() + winAmt);
     msg = '✨ 兩顆相同！贏得 NT$' + winAmt.toLocaleString();
     cls = 'result-win';
