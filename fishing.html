@@ -202,7 +202,7 @@ var ripples   = [];
 
 /* ── Spawn / update fish ── */
 function spawnFish(){
-  if(fishPool.length >= 9) return;
+  if(fishPool.length >= 14) return;
   var t    = randType();
   var dir  = Math.random()>0.5 ? 1 : -1;
   var dMin = WATER_Y + (GH - WATER_Y)*0.08;
@@ -404,7 +404,17 @@ function drawLine(){
     gx.lineTo(hx, hookY+9);
     gx.arc(hx-4, hookY+9, 4, 0, Math.PI, false);
     gx.stroke();
-    /* Bait */
+    /* Bait — 有魚靠近時發光 */
+    var _nearFish = fishPool.some(function(f){
+      return Math.abs(f.x-hx)<f.type.size*3+60 && Math.abs(f.y-hookY)<f.type.size*2+70;
+    });
+    if(_nearFish && (gState==='waiting'||gState==='biting')){
+      var _glow = gx.createRadialGradient(hx-8,hookY+9,2,hx-8,hookY+9,18);
+      _glow.addColorStop(0,'rgba(255,200,50,0.55)');
+      _glow.addColorStop(1,'rgba(255,200,50,0)');
+      gx.fillStyle=_glow;
+      gx.beginPath(); gx.arc(hx-8,hookY+9,18,0,Math.PI*2); gx.fill();
+    }
     gx.fillStyle='#ff5522';
     gx.beginPath(); gx.arc(hx-8, hookY+9, 4.5, 0, Math.PI*2); gx.fill();
     gx.restore();
@@ -417,10 +427,52 @@ function getHookX(){
 }
 
 function drawFishPool(){
-  /* Clip fish to underwater */
+  /* Clip fish bodies to underwater area */
   gx.save();
   gx.beginPath(); gx.rect(0, WATER_Y, GW, GH-WATER_Y); gx.clip();
   fishPool.forEach(drawFish);
+  gx.restore();
+  /* Labels drawn outside clip so they never get cut off */
+  fishPool.forEach(drawFishLabel);
+}
+
+function drawFishLabel(f){
+  var t = f.type, s = t.size;
+  /* 用 castBet（線在水裡時），否則用輸入框的值 */
+  var bet = castBet > 0 ? castBet : (parseInt(document.getElementById('betInput').value) || 100);
+  var winReturn = Math.round(bet * t.payout);
+  var profit    = winReturn - bet;
+
+  var labelText = (profit >= 0 ? '+' : '') + 'NT$' + profit.toLocaleString();
+
+  /* 顏色：虧損紅 / 小賺白 / 大賺綠 / 金魚金 */
+  var col;
+  if(t.id === 'golden')      col = '#FFD700';
+  else if(profit <= 0)       col = '#ff7070';
+  else if(t.payout >= 4)     col = '#4ade80';
+  else if(t.payout >= 2)     col = '#86efac';
+  else                       col = '#d0f0ff';
+
+  var fontSize = Math.max(9, Math.min(13, s * 0.5 + 6));
+  var labelY   = f.y - s * 0.55 - 10;
+
+  gx.save();
+  gx.font = 'bold ' + fontSize + 'px sans-serif';
+  gx.textAlign = 'center';
+  gx.textBaseline = 'middle';
+
+  /* 深色背景膠囊 */
+  var tw = gx.measureText(labelText).width;
+  var pw = tw + 8, ph = fontSize + 5;
+  gx.fillStyle = 'rgba(0,10,25,0.72)';
+  gx.beginPath();
+  gx.roundRect(f.x - pw/2, labelY - ph/2, pw, ph, ph/2);
+  gx.fill();
+
+  /* 文字 */
+  gx.fillStyle = col;
+  gx.shadowColor = col; gx.shadowBlur = 4;
+  gx.fillText(labelText, f.x, labelY);
   gx.restore();
 }
 
@@ -566,7 +618,7 @@ function loop(ts){
   waterT+=dt;
 
   /* Spawn fish ~0.5/sec */
-  if(Math.random()<0.008) spawnFish();
+  if(Math.random()<0.018) spawnFish();
   /* Spawn bubbles */
   if(Math.random()<0.025) spawnBubble();
 
@@ -581,14 +633,18 @@ function loop(ts){
   /* Update fish */
   fishPool.forEach(function(f){
     f.x += f.dir*f.type.speed*(dt/16);
-    f.y  = f.baseY + Math.sin(waterT*0.0018+f.phase)*(f.type.size*0.28);
+    /* 加大垂直擺動，讓魚更容易游到釣鉤深度 */
+    f.y  = f.baseY + Math.sin(waterT*0.0018+f.phase)*(f.type.size*0.7 + 18);
 
-    /* Bite detection when waiting */
+    /* Bite detection when waiting — X/Y 分開判斷，更寬鬆 */
     if(gState==='waiting' && !biteFish){
-      var dx=f.x-getHookX(), dy=f.y-hookY;
-      var dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist < f.type.size*2.0){
-        var chance = 0.005*(f.type.id==='tiny'?1.2:1);
+      var adx = Math.abs(f.x - getHookX());
+      var ady = Math.abs(f.y - hookY);
+      var xRange = f.type.size * 2.2 + 45;  /* 小魚 ~76px，大魚更大 */
+      var yRange = f.type.size * 1.8 + 55;  /* 小魚 ~80px，垂直寬鬆 */
+      if(adx < xRange && ady < yRange){
+        /* 機率大幅提高：每幀 3%，魚游過期間約 40-60% 機率咬鉤 */
+        var chance = 0.03;
         if(Math.random()<chance){
           f.biting=true; f.biteStart=Date.now();
           biteFish=f; biteTime=Date.now();
@@ -736,7 +792,7 @@ function showToast(msg,type){
 }
 
 /* Start game loop */
-for(var _i=0;_i<5;_i++) spawnFish();
+for(var _i=0;_i<10;_i++) spawnFish();
 requestAnimationFrame(loop);
 </script>
 </body>
