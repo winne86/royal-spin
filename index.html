@@ -604,8 +604,9 @@ document.getElementById('btnLogin').addEventListener('click', async function(){
   if(res.error || !res.data){ showToast('帳號或密碼錯誤', 'err'); return; }
   if(res.data.status === 'banned'){ showToast('此帳號已被停用', 'err'); return; }
   localStorage.setItem('rs_user', JSON.stringify(res.data));
+  localStorage.setItem('rs_balance', res.data.balance || 0);
   closeModal();
-  updateNavUser(res.data.username);
+  updateNavUser(res.data.username, res.data.balance || 0);
   showToast('歡迎回來，' + res.data.username + '！', 'ok');
 });
 
@@ -629,18 +630,25 @@ document.getElementById('btnRegister').addEventListener('click', async function(
     return;
   }
   localStorage.setItem('rs_user', JSON.stringify(res.data));
+  localStorage.setItem('rs_balance', 0);
   closeModal();
-  updateNavUser(res.data.username);
+  updateNavUser(res.data.username, 0);
   showToast('註冊成功！歡迎加入 Royal Spin 🎉', 'ok');
 });
 
 /* ── 更新 Nav 顯示登入狀態 ── */
-function updateNavUser(username){
+function updateNavUser(username, balance){
+  if(balance === undefined){
+    balance = parseInt(localStorage.getItem('rs_balance') || '0');
+  }
   var btns = document.querySelector('.rs-navbtns');
-  btns.innerHTML = '<div class="nav-user">歡迎，<strong>' + username + '</strong></div>'
+  btns.innerHTML = '<div class="nav-user"><strong>' + username + '</strong>'
+    + '<span style="color:rgba(240,237,229,0.4);margin:0 6px">|</span>'
+    + '<span style="color:#FF6400">NT$ <span id="navBalIndex">' + Number(balance).toLocaleString() + '</span></span></div>'
     + '<button class="btn-logout" id="btnLogout">登出</button>';
   document.getElementById('btnLogout').addEventListener('click', function(){
     localStorage.removeItem('rs_user');
+    localStorage.removeItem('rs_balance');
     location.reload();
   });
 }
@@ -648,7 +656,18 @@ function updateNavUser(username){
 /* ── 頁面載入時恢復登入狀態 ── */
 (function(){
   var u = localStorage.getItem('rs_user');
-  if(u){ try{ updateNavUser(JSON.parse(u).username); }catch(e){} }
+  if(u){ try{
+    var user = JSON.parse(u);
+    /* 從 Supabase 重新取得最新餘額 */
+    sb.from('players').select('balance').eq('id', user.id).single().then(function(res){
+      if(res.data){
+        localStorage.setItem('rs_balance', res.data.balance || 0);
+        updateNavUser(user.username, res.data.balance || 0);
+      } else {
+        updateNavUser(user.username);
+      }
+    });
+  }catch(e){} }
 })();
 
 /* 綁定 Nav 按鈕（僅未登入時有效） */

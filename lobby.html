@@ -74,6 +74,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-se
 /* FOOTER */
 .rs-foot{background:#080808;border-top:1px solid rgba(255,100,0,0.08);padding:20px 28px;text-align:center;font-size:12px;color:rgba(240,237,229,0.2)}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <canvas id="star-canvas"></canvas>
@@ -81,10 +82,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-se
 <nav class="rs-nav">
   <a href="index.html" class="rs-logo">ROYAL<span>SPIN</span></a>
   <div class="nav-balance">
-    <div>
-      <div class="balance-label">遊戲餘額</div>
-      <div class="balance-chip">NT$ <span id="navBalance">10,000</span></div>
-    </div>
+    <div class="balance-chip" id="navUserInfo">NT$ <span id="navBalance">0</span></div>
     <button class="btn-topup" onclick="topUp()">+ 儲值</button>
   </div>
 </nav>
@@ -210,12 +208,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-se
   draw();
 })();
 
-/* ── 餘額 ── */
-function getBalance(){ return parseInt(localStorage.getItem('rs_balance')||'10000'); }
+/* ── Supabase + 餘額 ── */
+var _sb = supabase.createClient(
+  'https://ndrhirlkamkfdbwoqfrp.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kcmhpcmxrYW1rZmRid29xZnJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQwOTQsImV4cCI6MjA4ODk2MDA5NH0.Hb-UPUR-lH2HkJm5Z1BfmQ2ICdFKMcNdp6ISmaoiwCM'
+);
+function getBalance(){ return parseInt(localStorage.getItem('rs_balance')||'0'); }
 function setBalance(v){ localStorage.setItem('rs_balance', v); updateBalanceDisplay(); }
 function updateBalanceDisplay(){ document.getElementById('navBalance').textContent = getBalance().toLocaleString(); }
 function topUp(){ setBalance(getBalance()+5000); alert('已儲值 NT$5,000！'); }
-updateBalanceDisplay();
+(function(){
+  var u = localStorage.getItem('rs_user');
+  if(u){ try{
+    var user = JSON.parse(u);
+    var info = document.getElementById('navUserInfo');
+    info.innerHTML = '<strong style="color:#F0EDE5">'+user.username+'</strong>'
+      +'<span style="color:rgba(240,237,229,0.4);margin:0 6px">|</span>'
+      +'NT$ <span id="navBalance">0</span>';
+    _sb.from('players').select('balance').eq('id', user.id).single().then(function(res){
+      if(res.data != null){ localStorage.setItem('rs_balance', res.data.balance || 0); }
+      updateBalanceDisplay();
+    });
+  }catch(e){ updateBalanceDisplay(); } }
+  else { updateBalanceDisplay(); }
+})();
 
 /* ── 搜尋 & 分類 ── */
 var currentCat = 'all';

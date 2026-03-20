@@ -99,6 +99,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-se
 
 .rs-foot{background:#080808;border-top:1px solid rgba(255,100,0,0.08);padding:16px;text-align:center;font-size:12px;color:rgba(240,237,229,0.2)}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <canvas id="star-canvas"></canvas>
@@ -106,7 +107,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-se
 <nav class="rs-nav">
   <a href="index.html" class="rs-logo">ROYAL<span>SPIN</span></a>
   <div class="nav-right">
-    <div class="balance-pill">NT$ <span id="navBal">0</span></div>
+    <div class="balance-pill" id="navUserInfo">NT$ <span id="navBal">0</span></div>
     <a href="lobby.html" class="nav-back">← 遊戲大廳</a>
   </div>
 </nav>
@@ -183,10 +184,34 @@ var PAYTABLE = {'🍒🍒🍒':3,'🍋🍋🍋':4,'🍊🍊🍊':6,'🍇🍇🍇
 var spinning = false;
 var history = [];
 
-function getBalance(){ return parseInt(localStorage.getItem('rs_balance')||'10000'); }
-function setBalance(v){ localStorage.setItem('rs_balance', Math.max(0,v)); updateBal(); }
+var _sb = supabase.createClient(
+  'https://ndrhirlkamkfdbwoqfrp.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kcmhpcmxrYW1rZmRid29xZnJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQwOTQsImV4cCI6MjA4ODk2MDA5NH0.Hb-UPUR-lH2HkJm5Z1BfmQ2ICdFKMcNdp6ISmaoiwCM'
+);
+function getBalance(){ return parseInt(localStorage.getItem('rs_balance')||'0'); }
+function setBalance(v){
+  var newBal = Math.max(0, v);
+  localStorage.setItem('rs_balance', newBal);
+  updateBal();
+  var u = localStorage.getItem('rs_user');
+  if(u){ try{ var user = JSON.parse(u); _sb.from('players').update({balance: newBal}).eq('id', user.id); }catch(e){} }
+}
 function updateBal(){ document.getElementById('navBal').textContent = getBalance().toLocaleString(); }
-updateBal();
+(function(){
+  var u = localStorage.getItem('rs_user');
+  if(u){ try{
+    var user = JSON.parse(u);
+    var info = document.getElementById('navUserInfo');
+    info.innerHTML = '<strong style="color:#F0EDE5">'+user.username+'</strong>'
+      +'<span style="color:rgba(240,237,229,0.4);margin:0 6px">|</span>'
+      +'NT$ <span id="navBal">0</span>';
+    _sb.from('players').select('balance').eq('id', user.id).single().then(function(res){
+      if(res.data != null){ localStorage.setItem('rs_balance', res.data.balance || 0); }
+      updateBal();
+    });
+  }catch(e){ updateBal(); } }
+  else { updateBal(); }
+})();
 function setBet(n){ document.getElementById('betInput').value = n; }
 function getBet(){
   var v = parseInt(document.getElementById('betInput').value)||0;
