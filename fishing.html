@@ -135,6 +135,25 @@ function setBalance(v){
   if(u){ try{ var user=JSON.parse(u); _sb.from('players').update({balance:nb}).eq('id',user.id); }catch(e){} }
 }
 function updateBal(){ var el=document.getElementById('navBal'); if(el) el.textContent=getBalance().toLocaleString(); }
+
+/* ── 寫入遊玩紀錄 ── */
+function logGame(bet, payout, result){
+  try{
+    var u = localStorage.getItem('rs_user');
+    var uid = null, uname = '訪客';
+    if(u){ var user=JSON.parse(u); uid=user.id; uname=user.username; }
+    _sb.from('game_logs').insert({
+      player_id: uid,
+      username:  uname,
+      game:      'fishing',
+      bet:       bet,
+      payout:    payout,
+      profit:    payout - bet,
+      result:    result,
+    });
+  }catch(e){}
+}
+
 (function(){
   var u=localStorage.getItem('rs_user');
   if(u){ try{
@@ -763,6 +782,7 @@ function loop(ts){
     if(hookY<=ROD_TIP.y){
       hookY=ROD_TIP.y;
       /* Missed - no fish */
+      if(castBet>0) logGame(castBet, 0, '空手而回');
       resultMsg='沒有釣到... 再試一次！'; resultColor='rgba(180,200,220,0.9)'; resultStart=Date.now();
       gState='result';
       document.getElementById('btnReel').style.display='none';
@@ -869,6 +889,7 @@ function reelIn(){
     showToast('釣到'+f.type.name+'！NT$'+profit.toLocaleString(),'ok');
   }
 
+  logGame(castBet, winReturn, '釣到 '+f.type.name);
   f.biting=false;
   f.x = f.dir<0 ? -300 : GW+300; /* remove fish */
   biteFish=null;

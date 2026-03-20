@@ -90,6 +90,29 @@ tbody td strong{color:#1A1A2E;font-weight:600}
 
 /* EMPTY / LOADING */
 .state-row td{text-align:center;padding:48px;color:#9CA3AF;font-size:14px}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid #E5E7EB;padding-bottom:0}
+.tab-btn{padding:10px 22px;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;font-size:14px;font-weight:600;color:#9CA3AF;cursor:pointer;font-family:inherit;transition:all 0.15s}
+.tab-btn.active{color:#FF6400;border-bottom-color:#FF6400}
+.tab-btn:hover:not(.active){color:#374151}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* LOG FILTERS */
+.log-filters{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.log-filters select,.log-filters input{background:#fff;border:1.5px solid #E5E7EB;border-radius:9px;padding:8px 13px;color:#1A1A2E;font-size:13px;font-family:inherit;outline:none;transition:border-color 0.15s}
+.log-filters select:focus,.log-filters input:focus{border-color:#FF6400}
+.log-filters input{width:180px}
+.btn-refresh{padding:8px 16px;background:#FF6400;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s}
+.btn-refresh:hover{background:#E85A00}
+.badge-game{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.badge-bigsmall{background:#EFF6FF;color:#1D4ED8}
+.badge-slots{background:#FFF7ED;color:#C2410C}
+.badge-fishing{background:#F0FDF4;color:#15803D}
+.profit-pos{color:#10B981;font-weight:600}
+.profit-neg{color:#EF4444;font-weight:600}
+.profit-zero{color:#9CA3AF}
 </style>
 </head>
 <body>
@@ -112,30 +135,71 @@ tbody td strong{color:#1A1A2E;font-weight:600}
     <button class="admin-out" onclick="adminLogout()">登出後台</button>
   </nav>
   <div class="admin-body">
-    <div class="admin-header">
-      <div class="admin-title">玩家管理 <span id="playerCountBadge"></span></div>
+    <!-- 分頁按鈕 -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('players')">👥 玩家管理</button>
+      <button class="tab-btn" onclick="switchTab('logs')">📋 遊玩紀錄</button>
     </div>
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="搜尋帳號 / 手機號碼..." oninput="filterTable()">
+
+    <!-- 玩家管理分頁 -->
+    <div class="tab-pane active" id="tabPlayers">
+      <div class="admin-header">
+        <div class="admin-title">玩家管理 <span id="playerCountBadge"></span></div>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="搜尋帳號 / 手機號碼..." oninput="filterTable()">
+      </div>
+      <div class="tbl-wrap">
+        <table id="playerTable">
+          <thead>
+            <tr>
+              <th>#</th><th>帳號</th><th>手機</th><th>餘額</th>
+              <th>邀請碼</th><th>狀態</th><th>註冊時間</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="playerBody">
+            <tr class="state-row"><td colspan="8">載入中...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="tbl-wrap">
-      <table id="playerTable">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>帳號</th>
-            <th>手機</th>
-            <th>餘額</th>
-            <th>邀請碼</th>
-            <th>狀態</th>
-            <th>註冊時間</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="playerBody">
-          <tr class="state-row"><td colspan="8">載入中...</td></tr>
-        </tbody>
-      </table>
+
+    <!-- 遊玩紀錄分頁 -->
+    <div class="tab-pane" id="tabLogs">
+      <div class="admin-header" style="margin-bottom:14px">
+        <div class="admin-title">遊玩紀錄 <span id="logCountBadge"></span></div>
+      </div>
+      <!-- 統計卡 -->
+      <div class="stat-cards" id="logStatCards">
+        <div class="stat-card"><div class="sc-label">總局數</div><div class="sc-value" id="statRounds">—</div></div>
+        <div class="stat-card green"><div class="sc-label">總下注額</div><div class="sc-value" id="statBet">—</div></div>
+        <div class="stat-card red"><div class="sc-label">莊家利潤</div><div class="sc-value" id="statProfit">—</div></div>
+        <div class="stat-card"><div class="sc-label">實際 RTP</div><div class="sc-value" id="statRtp">—</div></div>
+      </div>
+      <!-- 篩選列 -->
+      <div class="log-filters">
+        <select id="logFilterGame" onchange="loadLogs()">
+          <option value="">全部遊戲</option>
+          <option value="bigsmall">比大小</option>
+          <option value="slots">老虎機</option>
+          <option value="fishing">釣魚</option>
+        </select>
+        <input type="text" id="logFilterUser" placeholder="搜尋帳號..." oninput="filterLogsLocal()">
+        <button class="btn-refresh" onclick="loadLogs()">🔄 重新整理</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>時間</th><th>帳號</th><th>遊戲</th>
+              <th>下注</th><th>派彩</th><th>盈虧</th><th>結果</th>
+            </tr>
+          </thead>
+          <tbody id="logsBody">
+            <tr class="state-row"><td colspan="8">請切換到此分頁後載入</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -299,6 +363,78 @@ async function savePlayer(){
 /* ── 工具：跳脫 HTML ── */
 function escHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ── 分頁切換 ── */
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(function(b,i){
+    b.classList.toggle('active', (i===0&&tab==='players')||(i===1&&tab==='logs'));
+  });
+  document.getElementById('tabPlayers').classList.toggle('active', tab==='players');
+  document.getElementById('tabLogs').classList.toggle('active', tab==='logs');
+  if(tab==='logs' && allLogs.length===0) loadLogs();
+}
+
+/* ── 遊玩紀錄 ── */
+var allLogs = [];
+var GAME_NAMES = {bigsmall:'比大小', slots:'老虎機', fishing:'釣魚'};
+var GAME_BADGES = {bigsmall:'badge-bigsmall', slots:'badge-slots', fishing:'badge-fishing'};
+
+async function loadLogs(){
+  document.getElementById('logsBody').innerHTML = '<tr class="state-row"><td colspan="8">載入中...</td></tr>';
+  var game = document.getElementById('logFilterGame').value;
+  var query = sb.from('game_logs').select('*').order('created_at',{ascending:false}).limit(500);
+  if(game) query = query.eq('game', game);
+  var res = await query;
+  if(res.error){ showToast('載入失敗：'+res.error.message,'err'); return; }
+  allLogs = res.data || [];
+  updateLogStats(allLogs);
+  renderLogs(allLogs);
+}
+
+function filterLogsLocal(){
+  var q = document.getElementById('logFilterUser').value.toLowerCase();
+  var filtered = q ? allLogs.filter(function(l){ return l.username.toLowerCase().includes(q); }) : allLogs;
+  renderLogs(filtered);
+}
+
+function updateLogStats(logs){
+  var totalBet = logs.reduce(function(s,l){ return s+Number(l.bet||0); }, 0);
+  var totalPayout = logs.reduce(function(s,l){ return s+Number(l.payout||0); }, 0);
+  var houseProfit = totalBet - totalPayout;
+  var rtp = totalBet > 0 ? (totalPayout/totalBet*100).toFixed(1)+'%' : '—';
+  document.getElementById('statRounds').textContent = logs.length.toLocaleString();
+  document.getElementById('statBet').textContent = 'NT$'+Math.round(totalBet).toLocaleString();
+  document.getElementById('statProfit').textContent = 'NT$'+Math.round(houseProfit).toLocaleString();
+  document.getElementById('statRtp').textContent = rtp;
+  document.getElementById('logCountBadge').textContent = '共 '+logs.length+' 筆';
+}
+
+function renderLogs(logs){
+  var tbody = document.getElementById('logsBody');
+  if(!logs.length){
+    tbody.innerHTML = '<tr class="state-row"><td colspan="8">目前沒有紀錄</td></tr>';
+    return;
+  }
+  tbody.innerHTML = logs.map(function(l, i){
+    var dt = new Date(l.created_at);
+    var dateStr = (dt.getMonth()+1).toString().padStart(2,'0')+'/'+dt.getDate().toString().padStart(2,'0')
+      +' '+dt.getHours().toString().padStart(2,'0')+':'+dt.getMinutes().toString().padStart(2,'0');
+    var gameBadge = '<span class="badge badge-game '+(GAME_BADGES[l.game]||'')+'">'+escHtml(GAME_NAMES[l.game]||l.game)+'</span>';
+    var profit = Number(l.profit||0);
+    var profitCls = profit>0?'profit-pos':profit<0?'profit-neg':'profit-zero';
+    var profitStr = (profit>0?'+':'')+Math.round(profit).toLocaleString();
+    return '<tr>'
+      +'<td style="color:#9CA3AF;font-size:12px">'+(i+1)+'</td>'
+      +'<td style="color:#6B7280;font-size:12px">'+dateStr+'</td>'
+      +'<td><strong>'+escHtml(l.username)+'</strong></td>'
+      +'<td>'+gameBadge+'</td>'
+      +'<td>NT$'+Math.round(Number(l.bet||0)).toLocaleString()+'</td>'
+      +'<td style="color:#10B981">NT$'+Math.round(Number(l.payout||0)).toLocaleString()+'</td>'
+      +'<td class="'+profitCls+'">'+profitStr+'</td>'
+      +'<td style="font-size:12px;color:#6B7280">'+escHtml(l.result||'—')+'</td>'
+      +'</tr>';
+  }).join('');
 }
 </script>
 </body>

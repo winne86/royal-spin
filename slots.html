@@ -197,6 +197,25 @@ function setBalance(v){
   if(u){ try{ var user = JSON.parse(u); _sb.from('players').update({balance: newBal}).eq('id', user.id); }catch(e){} }
 }
 function updateBal(){ document.getElementById('navBal').textContent = getBalance().toLocaleString(); }
+
+/* ── 寫入遊玩紀錄 ── */
+function logGame(bet, payout, result){
+  try{
+    var u = localStorage.getItem('rs_user');
+    var uid = null, uname = '訪客';
+    if(u){ var user=JSON.parse(u); uid=user.id; uname=user.username; }
+    _sb.from('game_logs').insert({
+      player_id: uid,
+      username:  uname,
+      game:      'slots',
+      bet:       bet,
+      payout:    payout,
+      profit:    payout - bet,
+      result:    result,
+    });
+  }catch(e){}
+}
+
 (function(){
   var u = localStorage.getItem('rs_user');
   if(u){ try{
@@ -281,6 +300,7 @@ function evaluate(results, bet){
     if(mult >= 50) showToast('🏆 JACKPOT！贏得 NT$'+winAmt.toLocaleString(),'big');
     else showToast('贏得 NT$'+winAmt.toLocaleString(),'ok');
     history.unshift('win');
+    logGame(bet, winAmt, '三顆相同 '+s0+s1+s2);
   } else if(twoMatch){
     /* 兩顆相同：退回下注 + 小贏 20% */
     winAmt = Math.round(bet * 1.5);
@@ -289,10 +309,12 @@ function evaluate(results, bet){
     cls = 'result-win';
     showToast('小贏 NT$'+winAmt.toLocaleString(),'ok');
     history.unshift('win');
+    logGame(bet, winAmt, '兩顆相同');
   } else {
     /* 沒中獎：bet 已在 spin 時扣除，不用再動 */
     msg = '沒中獎，再試一次！';
     history.unshift('lose');
+    logGame(bet, 0, '未中獎');
   }
 
   document.getElementById('resultText').textContent = msg;
