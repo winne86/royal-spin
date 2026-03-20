@@ -211,13 +211,15 @@ function spin(){
   document.getElementById('resultText').className = 'result-text result-lose';
   for(var i=0;i<3;i++) document.getElementById('reel'+i).classList.remove('win-flash');
 
-  /* 動畫滾動 */
-  var frames = [0,0,0];
-  var intervals = [null,null,null];
+  /* 先扣押注 */
+  setBalance(getBalance() - bet);
+
+  var intervals = [null, null, null];
   var results = [randSym(), randSym(), randSym()];
   var stopTimes = [900, 1300, 1700];
 
-  for(let r=0; r<3; r++){
+  /* 用 forEach 確保閉包正確捕獲 r */
+  [0, 1, 2].forEach(function(r){
     intervals[r] = setInterval(function(){
       setReel(r, SYMS[Math.floor(Math.random()*SYMS.length)]);
     }, 80);
@@ -225,44 +227,49 @@ function spin(){
       clearInterval(intervals[r]);
       setReel(r, results[r]);
     }, stopTimes[r]);
-  }
+  });
 
+  /* 保證無論如何都會解鎖按鈕 */
   setTimeout(function(){
-    evaluate(results, bet);
+    try { evaluate(results, bet); } catch(e){ console.error('evaluate error:', e); }
     spinning = false;
     document.getElementById('btnSpin').disabled = false;
-  }, 1900);
+  }, 1950);
 }
 
 function evaluate(results, bet){
-  var key = results.join('');
-  var mult = PAYTABLE[key] || 0;
-  var twoMatch = (results[0]===results[1]||results[1]===results[2]||results[0]===results[2]) && !mult;
+  /* 用 symbol index 比對，避免 emoji join 字串不一致 */
+  var s0 = results[0], s1 = results[1], s2 = results[2];
+  var allSame = (s0 === s1 && s1 === s2);
+  var twoMatch = !allSame && (s0===s1 || s1===s2 || s0===s2);
+
+  var mult = allSame ? (PAYTABLE[s0+s1+s2] || 0) : 0;
   var winAmt = 0;
   var msg = '', cls = 'result-lose';
 
-  if(mult){
+  if(allSame && mult){
     winAmt = Math.round(bet * mult);
-    setBalance(getBalance() + winAmt);
-    msg = '🎉 ' + results.join('') + '  贏得 NT$' + winAmt.toLocaleString() + '！';
+    setBalance(getBalance() + winAmt); /* 加回全額獎金（bet 已在 spin 扣除）*/
+    msg = '🎉 ' + s0+s1+s2 + '  贏得 NT$' + winAmt.toLocaleString() + '！';
     cls = 'result-win';
     for(var i=0;i<3;i++) document.getElementById('reel'+i).classList.add('win-flash');
     if(mult >= 50) showToast('🏆 JACKPOT！贏得 NT$'+winAmt.toLocaleString(),'big');
     else showToast('贏得 NT$'+winAmt.toLocaleString(),'ok');
     history.unshift('win');
   } else if(twoMatch){
+    /* 兩顆相同：退回下注 + 小贏 20% */
     winAmt = Math.round(bet * 1.2);
-    setBalance(getBalance() + winAmt - bet);
-    msg = '✨ 兩顆相同！NT$' + winAmt.toLocaleString();
+    setBalance(getBalance() + winAmt);
+    msg = '✨ 兩顆相同！贏得 NT$' + winAmt.toLocaleString();
     cls = 'result-win';
+    showToast('小贏 NT$'+winAmt.toLocaleString(),'ok');
     history.unshift('win');
   } else {
-    setBalance(getBalance() - bet);
+    /* 沒中獎：bet 已在 spin 時扣除，不用再動 */
     msg = '沒中獎，再試一次！';
     history.unshift('lose');
   }
 
-  if(!twoMatch || mult) {} /* already handled */
   document.getElementById('resultText').textContent = msg;
   document.getElementById('resultText').className = 'result-text '+cls;
   if(history.length>20) history.pop();
