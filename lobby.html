@@ -6,12 +6,12 @@
 <title>遊戲大廳 — Royal Spin</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;background:#0A0A0A;color:#F0EDE5;overflow-x:hidden;min-height:100vh}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;background:#0A0A0A;color:#F0EDE5;overflow-x:hidden;min-height:100vh;padding-top:58px}
 #star-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
 .rs-nav,.lobby-hero,.lobby-body,.rs-foot{position:relative;z-index:1}
 
 /* NAV */
-.rs-nav{background:rgba(17,17,17,0.95);border-bottom:1px solid rgba(255,100,0,0.25);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.rs-nav{background:rgba(17,17,17,0.95);border-bottom:1px solid rgba(255,100,0,0.25);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:58px;position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(10px)}
 .rs-logo{font-size:21px;font-weight:700;letter-spacing:2px;color:#FF6400;text-decoration:none;text-shadow:0 0 20px rgba(255,100,0,0.4)}
 .rs-logo span{color:#F0EDE5;font-weight:400}
 .nav-back{font-size:13px;color:rgba(240,237,229,0.45);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.15s}
@@ -119,6 +119,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-se
         <div class="game-meta"><span>Pragmatic · 桌牌</span><span class="game-rtp">RTP 90%</span></div>
       </div>
       <a class="play-btn" href="bigsmall.html">立即遊玩 →</a>
+    </div>
+
+    <!-- 海釣大魚 -->
+    <div class="game-card playable" data-cat="other" data-name="海釣大魚">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d2a4e,#0a5a8b)">
+        <span>🎣</span>
+        <div class="glow"></div>
+        <span class="badge badge-new">NEW</span>
+      </div>
+      <div class="game-info">
+        <div class="game-name">海釣大魚</div>
+        <div class="game-meta"><span>Royal Original · 休閒</span><span class="game-rtp">RTP 90%</span></div>
+      </div>
+      <a class="play-btn" href="fishing.html">立即遊玩 →</a>
     </div>
 
     <!-- 老虎機 -->
