@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Royal Spin — 後台管理</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;background:#0D0D0D;color:#F0EDE5;min-height:100vh}
+
+/* LOGIN SCREEN */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-box{background:#141414;border:1px solid rgba(255,100,0,0.3);border-radius:16px;padding:40px 36px;width:340px;text-align:center}
+.login-box h2{font-size:20px;color:#FF6400;letter-spacing:2px;margin-bottom:6px}
+.login-box p{font-size:13px;color:rgba(240,237,229,0.35);margin-bottom:28px}
+.login-box input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:11px 14px;color:#F0EDE5;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px}
+.login-box input:focus{border-color:rgba(255,100,0,0.5)}
+.login-box button{width:100%;padding:12px;background:#FF6400;color:#0A0A0A;border:none;border-radius:9px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+.login-box button:hover{background:#FF7720}
+.login-err{font-size:13px;color:#FF7070;margin-top:10px;min-height:18px}
+
+/* ADMIN PANEL */
+#adminPanel{display:none}
+.admin-nav{background:#111;border-bottom:1px solid rgba(255,100,0,0.2);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.admin-logo{font-size:17px;font-weight:600;letter-spacing:2px;color:#FF6400}
+.admin-logo span{color:#F0EDE5;font-weight:400;font-size:13px;margin-left:8px;opacity:0.5}
+.admin-out{font-size:13px;padding:6px 16px;border:1px solid rgba(255,80,80,0.3);border-radius:7px;background:transparent;color:rgba(255,120,120,0.7);cursor:pointer;font-family:inherit;transition:all 0.15s}
+.admin-out:hover{border-color:rgba(255,80,80,0.6);color:#FF7070}
+
+.admin-body{max-width:1100px;margin:0 auto;padding:28px 24px}
+.admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.admin-title{font-size:18px;font-weight:600}
+.admin-title span{color:#FF6400}
+.player-count{font-size:13px;color:rgba(240,237,229,0.35);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:5px 14px;border-radius:20px}
+
+/* SEARCH */
+.search-bar{margin-bottom:16px}
+.search-bar input{width:100%;max-width:340px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:9px 14px;color:#F0EDE5;font-size:14px;font-family:inherit;outline:none}
+.search-bar input:focus{border-color:rgba(255,100,0,0.4)}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.07)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:rgba(255,100,0,0.08);border-bottom:1px solid rgba(255,100,0,0.2)}
+thead th{padding:12px 16px;text-align:left;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,100,0,0.7);font-weight:600;white-space:nowrap}
+tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,0.03)}
+tbody td{padding:12px 16px;color:rgba(240,237,229,0.8);vertical-align:middle}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:5px}
+.badge-active{background:rgba(78,201,148,0.15);color:#4EC994;border:1px solid rgba(78,201,148,0.25)}
+.badge-banned{background:rgba(255,80,80,0.12);color:#FF7070;border:1px solid rgba(255,80,80,0.2)}
+.btn-edit{font-size:12px;padding:5px 14px;border:1px solid rgba(255,100,0,0.35);border-radius:6px;background:transparent;color:#FF6400;cursor:pointer;font-family:inherit;transition:all 0.15s}
+.btn-edit:hover{background:rgba(255,100,0,0.1)}
+
+/* EDIT MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:999;align-items:flex-start;justify-content:center;padding-top:80px}
+.overlay.open{display:flex}
+.edit-box{background:#161616;border:1px solid rgba(255,100,0,0.3);border-radius:16px;padding:28px 26px;width:100%;max-width:420px;position:relative}
+.edit-box h3{font-size:16px;font-weight:600;margin-bottom:20px;color:#F0EDE5}
+.edit-box h3 span{color:#FF6400}
+.efield{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
+.efield label{font-size:11px;color:rgba(240,237,229,0.4);letter-spacing:0.5px}
+.efield input,.efield select{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 13px;color:#F0EDE5;font-size:14px;font-family:inherit;outline:none;transition:border-color 0.15s}
+.efield input:focus,.efield select:focus{border-color:rgba(255,100,0,0.5)}
+.efield select option{background:#1E1E1E}
+.edit-actions{display:flex;gap:10px;margin-top:6px}
+.btn-save{flex:1;padding:11px;background:#FF6400;color:#0A0A0A;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s}
+.btn-save:hover{background:#FF7720}
+.btn-cancel{flex:1;padding:11px;background:transparent;color:rgba(240,237,229,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;transition:all 0.15s}
+.btn-cancel:hover{border-color:rgba(255,255,255,0.25);color:#F0EDE5}
+.close-btn{position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(240,237,229,0.3);font-size:18px;cursor:pointer}
+.close-btn:hover{color:#FF6400}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1E1E1E;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 22px;font-size:14px;color:#F0EDE5;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:rgba(78,201,148,0.5);color:#4EC994}
+.toast.err{border-color:rgba(255,80,80,0.5);color:#FF7070}
+
+/* EMPTY / LOADING */
+.state-row td{text-align:center;padding:40px;color:rgba(240,237,229,0.25);font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- 後台登入 -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h2>ROYAL<span style="color:#F0EDE5;font-weight:400">SPIN</span></h2>
+    <p>後台管理系統</p>
+    <input type="password" id="adminPass" placeholder="請輸入後台密碼" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">進入後台</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- 後台主頁面 -->
+<div id="adminPanel">
+  <nav class="admin-nav">
+    <div class="admin-logo">ROYAL<span>SPIN 後台</span></div>
+    <button class="admin-out" onclick="adminLogout()">登出後台</button>
+  </nav>
+  <div class="admin-body">
+    <div class="admin-header">
+      <div class="admin-title">玩家管理 <span id="playerCountBadge"></span></div>
+    </div>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="搜尋帳號 / 手機號碼..." oninput="filterTable()">
+    </div>
+    <div class="tbl-wrap">
+      <table id="playerTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>帳號</th>
+            <th>手機</th>
+            <th>餘額</th>
+            <th>邀請碼</th>
+            <th>狀態</th>
+            <th>註冊時間</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="playerBody">
+          <tr class="state-row"><td colspan="8">載入中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 編輯 Modal -->
+<div class="overlay" id="editOverlay">
+  <div class="edit-box">
+    <button class="close-btn" onclick="closeEdit()">✕</button>
+    <h3>編輯玩家：<span id="editTitle"></span></h3>
+    <input type="hidden" id="editId">
+    <div class="efield"><label>帳號</label><input id="editUsername" type="text"></div>
+    <div class="efield"><label>手機號碼</label><input id="editPhone" type="tel"></div>
+    <div class="efield"><label>新密碼（留空不修改）</label><input id="editPass" type="text" placeholder="輸入新密碼"></div>
+    <div class="efield"><label>餘額 (NT$)</label><input id="editBalance" type="number" min="0"></div>
+    <div class="efield"><label>邀請碼</label><input id="editInvite" type="text"></div>
+    <div class="efield">
+      <label>帳號狀態</label>
+      <select id="editStatus">
+        <option value="active">正常</option>
+        <option value="banned">停用</option>
+      </select>
+    </div>
+    <div class="edit-actions">
+      <button class="btn-cancel" onclick="closeEdit()">取消</button>
+      <button class="btn-save" onclick="savePlayer()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var SUPABASE_URL = 'https://ndrhirlkamkfdbwoqfrp.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kcmhpcmxrYW1rZmRid29xZnJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQwOTQsImV4cCI6MjA4ODk2MDA5NH0.Hb-UPUR-lH2HkJm5Z1BfmQ2ICdFKMcNdp6ISmaoiwCM';
+var ADMIN_PASSWORD = 'royalspin2026'; /* ← 後台密碼，可自行修改 */
+
+var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var allPlayers = [];
+
+/* ── TOAST ── */
+function showToast(msg, type){
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast '+(type||'');
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+/* ── 登入後台 ── */
+function doLogin(){
+  var pw = document.getElementById('adminPass').value;
+  if(pw === ADMIN_PASSWORD){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    sessionStorage.setItem('rs_admin', '1');
+    loadPlayers();
+  } else {
+    document.getElementById('loginErr').textContent = '密碼錯誤';
+  }
+}
+function adminLogout(){
+  sessionStorage.removeItem('rs_admin');
+  location.reload();
+}
+
+/* 自動恢復登入 */
+if(sessionStorage.getItem('rs_admin')){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  loadPlayers();
+}
+
+/* ── 載入玩家 ── */
+async function loadPlayers(){
+  var res = await sb.from('players').select('*').order('created_at', {ascending: false});
+  if(res.error){ showToast('載入失敗：'+res.error.message, 'err'); return; }
+  allPlayers = res.data || [];
+  document.getElementById('playerCountBadge').textContent = '共 '+allPlayers.length+' 位玩家';
+  renderTable(allPlayers);
+}
+
+/* ── 渲染表格 ── */
+function renderTable(players){
+  var tbody = document.getElementById('playerBody');
+  if(!players.length){
+    tbody.innerHTML = '<tr class="state-row"><td colspan="8">目前沒有玩家資料</td></tr>';
+    return;
+  }
+  tbody.innerHTML = players.map(function(p, i){
+    var dt = new Date(p.created_at);
+    var dateStr = dt.getFullYear()+'/'+(dt.getMonth()+1).toString().padStart(2,'0')+'/'+dt.getDate().toString().padStart(2,'0')
+      +' '+dt.getHours().toString().padStart(2,'0')+':'+dt.getMinutes().toString().padStart(2,'0');
+    var badge = p.status === 'banned'
+      ? '<span class="badge badge-banned">停用</span>'
+      : '<span class="badge badge-active">正常</span>';
+    return '<tr>'
+      +'<td style="color:rgba(240,237,229,0.25)">'+(i+1)+'</td>'
+      +'<td><strong>'+escHtml(p.username)+'</strong></td>'
+      +'<td>'+escHtml(p.phone||'—')+'</td>'
+      +'<td style="color:#4EC994">NT$'+Number(p.balance||0).toLocaleString()+'</td>'
+      +'<td>'+escHtml(p.invite_code||'—')+'</td>'
+      +'<td>'+badge+'</td>'
+      +'<td style="color:rgba(240,237,229,0.35);font-size:12px">'+dateStr+'</td>'
+      +'<td><button class="btn-edit" onclick="openEdit(\''+p.id+'\')">編輯</button></td>'
+      +'</tr>';
+  }).join('');
+}
+
+/* ── 搜尋過濾 ── */
+function filterTable(){
+  var q = document.getElementById('searchInput').value.toLowerCase();
+  var filtered = allPlayers.filter(function(p){
+    return p.username.toLowerCase().includes(q) || (p.phone||'').includes(q);
+  });
+  renderTable(filtered);
+}
+
+/* ── 開啟編輯 ── */
+function openEdit(id){
+  var p = allPlayers.find(function(x){ return x.id === id; });
+  if(!p) return;
+  document.getElementById('editId').value       = p.id;
+  document.getElementById('editTitle').textContent = p.username;
+  document.getElementById('editUsername').value  = p.username;
+  document.getElementById('editPhone').value     = p.phone || '';
+  document.getElementById('editPass').value      = '';
+  document.getElementById('editBalance').value   = p.balance || 0;
+  document.getElementById('editInvite').value    = p.invite_code || '';
+  document.getElementById('editStatus').value    = p.status || 'active';
+  document.getElementById('editOverlay').classList.add('open');
+}
+function closeEdit(){
+  document.getElementById('editOverlay').classList.remove('open');
+}
+document.getElementById('editOverlay').addEventListener('click', function(e){
+  if(e.target === this) closeEdit();
+});
+
+/* ── 儲存編輯 ── */
+async function savePlayer(){
+  var id       = document.getElementById('editId').value;
+  var username = document.getElementById('editUsername').value.trim();
+  var phone    = document.getElementById('editPhone').value.trim();
+  var newPass  = document.getElementById('editPass').value;
+  var balance  = parseFloat(document.getElementById('editBalance').value) || 0;
+  var invite   = document.getElementById('editInvite').value.trim();
+  var status   = document.getElementById('editStatus').value;
+
+  if(!username){ showToast('帳號不能為空', 'err'); return; }
+
+  var updates = { username: username, phone: phone, balance: balance, invite_code: invite||null, status: status };
+  if(newPass) updates.password = newPass;
+
+  var res = await sb.from('players').update(updates).eq('id', id);
+  if(res.error){ showToast('儲存失敗：'+res.error.message, 'err'); return; }
+
+  closeEdit();
+  showToast('已成功更新玩家資料', 'ok');
+  loadPlayers();
+}
+
+/* ── 工具：跳脫 HTML ── */
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

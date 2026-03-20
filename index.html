@@ -8,6 +8,10 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;background:#0A0A0A;color:#F0EDE5;overflow-x:hidden}
 
+/* STARS */
+#star-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.rs-nav,.rs-hero,.rs-mq,.rs-sec,.rs-vip,.rs-foot,.hr{position:relative;z-index:1}
+
 /* NAV */
 .rs-nav{background:#111;border-bottom:1px solid rgba(255,100,0,0.3);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100}
 .rs-logo{font-size:21px;font-weight:600;letter-spacing:2px;color:#FF6400;text-shadow:0 0 20px rgba(255,100,0,0.4)}
@@ -82,7 +86,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-se
 .ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
 .gcard{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden;cursor:pointer;transition:all 0.22s;position:relative}
 .gcard:hover{border-color:rgba(255,100,0,0.55);transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,0.5),0 0 20px rgba(255,100,0,0.1)}
-.gthumb{height:100px;display:flex;align-items:center;justify-content:center;font-size:40px;position:relative}
+.gthumb{height:140px;display:flex;align-items:center;justify-content:center;font-size:40px;position:relative;overflow:hidden}
+.gthumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.3s ease}
+.gcard:hover .gthumb img{transform:scale(1.06)}
 .g1{background:linear-gradient(135deg,#1A1200,#2A1800)}
 .g2{background:linear-gradient(135deg,#1A0800,#2A1000)}
 .g3{background:linear-gradient(135deg,#0A0A1A,#14142A)}
@@ -127,6 +133,61 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-se
 .vtd{border-color:rgba(160,220,255,0.45);color:#90D0FF;background:rgba(160,220,255,0.08);box-shadow:0 0 12px rgba(160,220,255,0.07)}
 .vdot{width:8px;height:8px;border-radius:50%;background:currentColor;opacity:0.85;box-shadow:0 0 5px currentColor}
 
+/* MODAL */
+.modal-overlay{
+  visibility:hidden;
+  opacity:0;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.78);
+  z-index:9999;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding-top:72px;
+  transition:opacity 0.22s ease, visibility 0.22s ease;
+}
+.modal-overlay.open{
+  visibility:visible;
+  opacity:1;
+}
+.modal-box{
+  background:#141414;
+  border:1px solid rgba(255,100,0,0.35);
+  border-radius:18px;
+  padding:32px 30px 28px;
+  width:100%;
+  max-width:390px;
+  position:relative;
+  box-shadow:0 32px 80px rgba(0,0,0,0.85),0 0 50px rgba(255,100,0,0.1);
+  transform:translateY(-24px);
+  transition:transform 0.28s cubic-bezier(0.34,1.3,0.64,1);
+}
+.modal-overlay.open .modal-box{
+  transform:translateY(0);
+}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(240,237,229,0.35);font-size:20px;cursor:pointer;transition:color 0.15s;line-height:1}
+.modal-close:hover{color:#FF6400}
+.modal-logo{font-size:18px;font-weight:600;letter-spacing:2px;color:#FF6400;text-align:center;margin-bottom:20px}
+.modal-logo span{color:#F0EDE5;font-weight:400}
+.modal-tabs{display:flex;gap:0;margin-bottom:24px;background:rgba(255,255,255,0.04);border-radius:9px;padding:3px}
+.mtab{flex:1;padding:8px;border:none;background:none;color:rgba(240,237,229,0.4);font-size:14px;font-family:inherit;cursor:pointer;border-radius:7px;transition:all 0.2s}
+.mtab.active{background:#FF6400;color:#0A0A0A;font-weight:600}
+.mform{display:none;flex-direction:column;gap:13px}
+.mform.active{display:flex}
+.mfield{display:flex;flex-direction:column;gap:5px}
+.mfield label{font-size:12px;color:rgba(240,237,229,0.45);letter-spacing:0.5px}
+.mfield input{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 13px;color:#F0EDE5;font-size:14px;font-family:inherit;outline:none;transition:border-color 0.15s}
+.mfield input:focus{border-color:rgba(255,100,0,0.6)}
+.mfield input::placeholder{color:rgba(240,237,229,0.2)}
+.msubmit{margin-top:4px;padding:12px;background:#FF6400;color:#0A0A0A;border:none;border-radius:9px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 0 24px rgba(255,100,0,0.4);transition:all 0.15s}
+.msubmit:hover{background:#FF7720;box-shadow:0 0 36px rgba(255,100,0,0.6)}
+.mfootnote{text-align:center;font-size:12px;color:rgba(240,237,229,0.25);margin-top:6px}
+.mfootnote a{color:rgba(255,100,0,0.7);cursor:pointer;text-decoration:none}
+.mfootnote a:hover{color:#FF6400}
+.mdivider{display:flex;align-items:center;gap:10px;color:rgba(240,237,229,0.2);font-size:12px}
+.mdivider::before,.mdivider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.07)}
+
 /* FOOTER */
 .rs-foot{background:#080808;border-top:1px solid rgba(255,100,0,0.1);padding:32px 28px 22px}
 .foot-inner{max-width:960px;margin:0 auto}
@@ -147,9 +208,50 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-se
   .rs-navlinks{display:none}
   .hero-h1{font-size:30px}
 }
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#1E1E1E;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 22px;font-size:14px;color:#F0EDE5;z-index:99999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:rgba(78,201,148,0.5);color:#4EC994}
+.toast.err{border-color:rgba(255,80,80,0.5);color:#FF7070}
+/* NAV USER */
+.nav-user{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(240,237,229,0.7)}
+.nav-user strong{color:#FF6400}
+.btn-logout{font-size:12px;padding:5px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:transparent;color:rgba(240,237,229,0.4);cursor:pointer;font-family:inherit;transition:all 0.15s}
+.btn-logout:hover{border-color:rgba(255,80,80,0.4);color:#FF7070}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+<canvas id="star-canvas"></canvas>
+<div class="toast" id="toast"></div>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div class="modal-logo">ROYAL<span>SPIN</span></div>
+    <div class="modal-tabs">
+      <button class="mtab active" id="tabLogin">登入</button>
+      <button class="mtab" id="tabRegister">立即註冊</button>
+    </div>
+    <!-- 登入表單 -->
+    <form class="mform active" id="formLogin" onsubmit="return false">
+      <div class="mfield"><label>帳號</label><input id="loginUser" type="text" placeholder="請輸入帳號"></div>
+      <div class="mfield"><label>密碼</label><input id="loginPass" type="password" placeholder="請輸入密碼"></div>
+      <button class="msubmit" id="btnLogin">登入</button>
+      <div class="mfootnote">還沒有帳號？<a id="switchToReg">立即免費註冊</a></div>
+    </form>
+    <!-- 註冊表單 -->
+    <form class="mform" id="formRegister" onsubmit="return false">
+      <div class="mfield"><label>手機號碼</label><input id="regPhone" type="tel" placeholder="09XX-XXX-XXX"></div>
+      <div class="mfield"><label>帳號</label><input id="regUser" type="text" placeholder="4–16 位英數字"></div>
+      <div class="mfield"><label>密碼</label><input id="regPass" type="password" placeholder="至少 8 位，含英文與數字"></div>
+      <div class="mfield"><label>邀請碼（選填）</label><input id="regInvite" type="text" placeholder="輸入邀請碼享額外獎金"></div>
+      <button class="msubmit" id="btnRegister">免費註冊 →</button>
+      <div class="mfootnote">已有帳號？<a id="switchToLogin">直接登入</a></div>
+    </form>
+  </div>
+</div>
 
 <nav class="rs-nav">
   <div class="rs-logo">ROYAL<span>SPIN</span></div>
@@ -254,24 +356,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-se
   </div>
   <div class="ggrid">
     <div class="gcard">
-      <div class="gthumb g1"><span style="font-size:40px">🐯</span><div class="gbadge ghot">HOT</div></div>
-      <div class="ginfo"><div class="gname">Fortune Tiger</div><div class="gmeta">PG Soft · RTP 96.8%</div></div>
+      <div class="gthumb"><img src="img/sweet-bonanza.jpg" alt="Sweet Bonanza"><div class="gbadge ghot">HOT</div></div>
+      <div class="ginfo"><div class="gname">Sweet Bonanza</div><div class="gmeta">Pragmatic Play · RTP 96.5%</div></div>
     </div>
     <div class="gcard">
-      <div class="gthumb g2"><span style="font-size:40px">🎡</span><div class="gbadge grtp">RTP 97.3%</div></div>
-      <div class="ginfo"><div class="gname">歐洲輪盤</div><div class="gmeta">Pragmatic · RTP 97.3%</div></div>
+      <div class="gthumb"><img src="img/dog-house-megaways.jpg" alt="The Dog House Megaways"><div class="gbadge grtp">RTP 96.5%</div></div>
+      <div class="ginfo"><div class="gname">Dog House Megaways</div><div class="gmeta">Pragmatic Play · RTP 96.5%</div></div>
     </div>
     <div class="gcard">
-      <div class="gthumb g3"><span style="font-size:40px">⚡</span><div class="gbadge gnew">NEW</div></div>
-      <div class="ginfo"><div class="gname">Gates of Olympus</div><div class="gmeta">Pragmatic · RTP 96.5%</div></div>
+      <div class="gthumb"><img src="img/gates-of-olympus.jpg" alt="Gates of Olympus"><div class="gbadge gnew">NEW</div></div>
+      <div class="ginfo"><div class="gname">Gates of Olympus</div><div class="gmeta">Pragmatic Play · RTP 96.5%</div></div>
     </div>
     <div class="gcard">
-      <div class="gthumb g4"><span style="font-size:40px">♠️</span></div>
-      <div class="ginfo"><div class="gname">德州撲克</div><div class="gmeta">GGPoker · Live</div></div>
+      <div class="gthumb"><img src="img/big-bass-bonanza.jpg" alt="Big Bass Bonanza"></div>
+      <div class="ginfo"><div class="gname">Big Bass Bonanza</div><div class="gmeta">Pragmatic Play · RTP 96.7%</div></div>
     </div>
     <div class="gcard">
-      <div class="gthumb g5"><span style="font-size:40px">🚀</span><div class="gbadge ghot">HOT</div></div>
-      <div class="ginfo"><div class="gname">Aviator Crash</div><div class="gmeta">Spribe · 即時</div></div>
+      <div class="gthumb"><img src="img/starlight-princess.jpg" alt="Starlight Princess"><div class="gbadge ghot">HOT</div></div>
+      <div class="ginfo"><div class="gname">Starlight Princess</div><div class="gmeta">Pragmatic Play · RTP 96.5%</div></div>
     </div>
   </div>
 </div>
@@ -349,6 +451,211 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-se
 </div>
 
 <script>
+/* ── STAR CANVAS ── */
+(function(){
+  var c = document.getElementById('star-canvas');
+  var ctx = c.getContext('2d');
+  var stars = [], sparks = [];
+  function resize(){ c.width = window.innerWidth; c.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  /* 產生星星 */
+  for(var i=0; i<220; i++){
+    var big = Math.random() > 0.88;
+    stars.push({
+      x: Math.random(), y: Math.random(),
+      r: big ? Math.random()*0.4+0.4 : Math.random()*0.9+0.2,
+      speed: Math.random()*1.25+0.4,   /* 閃爍速度（減半） */
+      phase: Math.random()*Math.PI*2,
+      big: big,
+      orange: Math.random()>0.82
+    });
+  }
+
+  /* 隨機閃爍火花 */
+  function addSpark(){
+    sparks.push({
+      x: Math.random()*c.width, y: Math.random()*c.height,
+      r: Math.random()*2+1,
+      life: 1, decay: Math.random()*0.035+0.02,
+      orange: Math.random()>0.7
+    });
+  }
+  setInterval(addSpark, 240);
+
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    var t = Date.now()/1000;
+
+    /* 畫星星 */
+    stars.forEach(function(s){
+      var raw = Math.sin(t*s.speed + s.phase);
+      /* 讓亮/暗對比更強烈 */
+      var alpha = raw > 0
+        ? 0.08 + 0.92 * raw * raw
+        : 0.08;
+
+      var px = s.x*c.width, py = s.y*c.height;
+      var col = s.orange ? '255,140,50' : '255,255,255';
+
+      ctx.beginPath();
+      ctx.arc(px, py, s.r, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba('+col+','+alpha+')';
+      ctx.fill();
+
+      /* 大星：加十字光暈 */
+      if(s.big && alpha > 0.5){
+        var len = s.r * (3 + alpha*5);
+        ctx.save();
+        ctx.globalAlpha = alpha * 0.55;
+        ctx.strokeStyle = 'rgba('+col+',1)';
+        ctx.lineWidth = 0.7;
+        ctx.beginPath();
+        ctx.moveTo(px-len, py); ctx.lineTo(px+len, py);
+        ctx.moveTo(px, py-len); ctx.lineTo(px, py+len);
+        ctx.stroke();
+        /* 45度輔線 */
+        ctx.globalAlpha = alpha * 0.2;
+        ctx.lineWidth = 0.4;
+        ctx.beginPath();
+        ctx.moveTo(px-len*0.6,py-len*0.6); ctx.lineTo(px+len*0.6,py+len*0.6);
+        ctx.moveTo(px+len*0.6,py-len*0.6); ctx.lineTo(px-len*0.6,py+len*0.6);
+        ctx.stroke();
+        ctx.restore();
+      }
+    });
+
+    /* 畫火花 */
+    sparks = sparks.filter(function(sp){
+      sp.life -= sp.decay;
+      if(sp.life <= 0) return false;
+      var col = sp.orange ? '255,140,50' : '255,255,255';
+      ctx.save();
+      ctx.globalAlpha = sp.life;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, sp.r * sp.life, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba('+col+',1)';
+      ctx.fill();
+      /* 短十字 */
+      ctx.strokeStyle = 'rgba('+col+',1)';
+      ctx.lineWidth = 0.6;
+      var l = sp.r*3*sp.life;
+      ctx.beginPath();
+      ctx.moveTo(sp.x-l,sp.y); ctx.lineTo(sp.x+l,sp.y);
+      ctx.moveTo(sp.x,sp.y-l); ctx.lineTo(sp.x,sp.y+l);
+      ctx.stroke();
+      ctx.restore();
+      return true;
+    });
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ── SUPABASE 初始化 ── */
+var sb = supabase.createClient(
+  'https://ndrhirlkamkfdbwoqfrp.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kcmhpcmxrYW1rZmRid29xZnJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQwOTQsImV4cCI6MjA4ODk2MDA5NH0.Hb-UPUR-lH2HkJm5Z1BfmQ2ICdFKMcNdp6ISmaoiwCM'
+);
+
+/* ── TOAST ── */
+function showToast(msg, type){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + (type||'');
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+/* ── AUTH MODAL ── */
+function openModal(tab){
+  document.getElementById('authModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  switchTab(tab||'login');
+}
+function closeModal(){
+  document.getElementById('authModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function switchTab(t){
+  var isLogin = t==='login';
+  document.getElementById('tabLogin').classList.toggle('active', isLogin);
+  document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+  document.getElementById('formLogin').classList.toggle('active', isLogin);
+  document.getElementById('formRegister').classList.toggle('active', !isLogin);
+}
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('authModal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+document.getElementById('tabLogin').addEventListener('click', function(){ switchTab('login'); });
+document.getElementById('tabRegister').addEventListener('click', function(){ switchTab('register'); });
+document.getElementById('switchToReg').addEventListener('click', function(){ switchTab('register'); });
+document.getElementById('switchToLogin').addEventListener('click', function(){ switchTab('login'); });
+
+/* ── 登入 ── */
+document.getElementById('btnLogin').addEventListener('click', async function(){
+  var username = document.getElementById('loginUser').value.trim();
+  var password = document.getElementById('loginPass').value;
+  if(!username || !password){ showToast('請填寫帳號和密碼', 'err'); return; }
+  this.textContent = '登入中...'; this.disabled = true;
+  var res = await sb.from('players').select('*').eq('username', username).eq('password', password).single();
+  this.textContent = '登入'; this.disabled = false;
+  if(res.error || !res.data){ showToast('帳號或密碼錯誤', 'err'); return; }
+  if(res.data.status === 'banned'){ showToast('此帳號已被停用', 'err'); return; }
+  localStorage.setItem('rs_user', JSON.stringify(res.data));
+  closeModal();
+  updateNavUser(res.data.username);
+  showToast('歡迎回來，' + res.data.username + '！', 'ok');
+});
+
+/* ── 註冊 ── */
+document.getElementById('btnRegister').addEventListener('click', async function(){
+  var phone    = document.getElementById('regPhone').value.trim();
+  var username = document.getElementById('regUser').value.trim();
+  var password = document.getElementById('regPass').value;
+  var invite   = document.getElementById('regInvite').value.trim();
+  if(!phone || !username || !password){ showToast('請填寫必填欄位', 'err'); return; }
+  if(username.length < 4 || username.length > 16){ showToast('帳號需 4–16 個字元', 'err'); return; }
+  if(password.length < 8){ showToast('密碼至少 8 位', 'err'); return; }
+  this.textContent = '處理中...'; this.disabled = true;
+  var res = await sb.from('players').insert([{
+    username: username, phone: phone, password: password,
+    invite_code: invite || null
+  }]).select().single();
+  this.textContent = '免費註冊 →'; this.disabled = false;
+  if(res.error){
+    showToast(res.error.code === '23505' ? '此帳號已被使用' : '註冊失敗，請稍後再試', 'err');
+    return;
+  }
+  localStorage.setItem('rs_user', JSON.stringify(res.data));
+  closeModal();
+  updateNavUser(res.data.username);
+  showToast('註冊成功！歡迎加入 Royal Spin 🎉', 'ok');
+});
+
+/* ── 更新 Nav 顯示登入狀態 ── */
+function updateNavUser(username){
+  var btns = document.querySelector('.rs-navbtns');
+  btns.innerHTML = '<div class="nav-user">歡迎，<strong>' + username + '</strong></div>'
+    + '<button class="btn-logout" id="btnLogout">登出</button>';
+  document.getElementById('btnLogout').addEventListener('click', function(){
+    localStorage.removeItem('rs_user');
+    location.reload();
+  });
+}
+
+/* ── 頁面載入時恢復登入狀態 ── */
+(function(){
+  var u = localStorage.getItem('rs_user');
+  if(u){ try{ updateNavUser(JSON.parse(u).username); }catch(e){} }
+})();
+
+/* 綁定 Nav 按鈕（僅未登入時有效） */
+document.querySelector('.btn-login') && document.querySelector('.btn-login').addEventListener('click', function(){ openModal('login'); });
+document.querySelector('.btn-join') && document.querySelector('.btn-join').addEventListener('click', function(){ openModal('register'); });
+document.querySelector('.cta-primary').addEventListener('click', function(){ openModal('register'); });
+
 var s = 23*3600 + 47*12;
 setInterval(function() {
   s--; if(s < 0) s = 86399;
