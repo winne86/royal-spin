@@ -161,19 +161,42 @@ var ROD_TIP   = {x:372, y:72};   // where line starts
 var ROD_BASE  = {x:506, y:148};  // fisherman's hand
 
 /* ── Fish types ── */
+/* 所有 payout > 1.0，釣到永遠是正收益 */
 var FISH_TYPES = [
-  {id:'tiny',   name:'小雜魚', color:'#7ec8e3', dark:'#5aa8c3', size:14, payout:0.5,  weight:7,   speed:2.0},
-  {id:'snapper',name:'紅鯛魚', color:'#ff7766', dark:'#cc5544', size:22, payout:1.2,  weight:4,   speed:1.4},
-  {id:'grouper',name:'石斑魚', color:'#88bb66', dark:'#668844', size:30, payout:2.0,  weight:2.5, speed:1.0},
-  {id:'tuna',   name:'大鮪魚', color:'#5588ff', dark:'#3366dd', size:46, payout:3.5,  weight:1.2, speed:0.75},
-  {id:'shark',  name:'大鯊魚', color:'#99aabb', dark:'#778899', size:60, payout:6.0,  weight:0.5, speed:0.55},
-  {id:'golden', name:'神秘金魚',color:'#ffd700', dark:'#cc9900', size:24, payout:12.0, weight:0.25,speed:1.1},
+  {id:'tiny',   name:'小雜魚',  color:'#7ec8e3', dark:'#5aa8c3', size:14, payout:1.2,  weight:5,   speed:2.0},
+  {id:'snapper',name:'紅鯛魚',  color:'#ff7766', dark:'#cc5544', size:22, payout:1.5,  weight:3,   speed:1.4},
+  {id:'grouper',name:'石斑魚',  color:'#88bb66', dark:'#668844', size:30, payout:2.0,  weight:2,   speed:1.0},
+  {id:'tuna',   name:'大鮪魚',  color:'#5588ff', dark:'#3366dd', size:46, payout:4.0,  weight:0.8, speed:0.75},
+  {id:'shark',  name:'大鯊魚',  color:'#99aabb', dark:'#778899', size:60, payout:8.0,  weight:0.3, speed:0.55},
+  {id:'golden', name:'神秘金魚',color:'#ffd700', dark:'#cc9900', size:24, payout:20.0, weight:0.1, speed:1.1},
 ];
 var _totalW = FISH_TYPES.reduce(function(s,t){return s+t.weight;},0);
 function randType(){
   var r=Math.random()*_totalW;
   for(var i=0;i<FISH_TYPES.length;i++){ r-=FISH_TYPES[i].weight; if(r<=0) return FISH_TYPES[i]; }
   return FISH_TYPES[0];
+}
+function typeById(id){ return FISH_TYPES.filter(function(t){return t.id===id;})[0]; }
+
+/* ── 預定結果表（RTP ≈ 95%）
+   計算：Σ prob × payout = 0.245×1.2 + 0.13×1.5 + 0.07×2.0 + 0.030×4.0 + 0.013×8.0 + 0.005×20.0
+                        = 0.294 + 0.195 + 0.140 + 0.120 + 0.104 + 0.100 = 0.953 ≈ 95% ── */
+var OUTCOMES = [
+  {fishId:null,      prob:0.507},
+  {fishId:'tiny',    prob:0.245},
+  {fishId:'snapper', prob:0.130},
+  {fishId:'grouper', prob:0.070},
+  {fishId:'tuna',    prob:0.030},
+  {fishId:'shark',   prob:0.013},
+  {fishId:'golden',  prob:0.005},
+];
+function rollOutcome(){
+  var r=Math.random(), cum=0;
+  for(var i=0;i<OUTCOMES.length;i++){
+    cum+=OUTCOMES[i].prob;
+    if(r<cum) return OUTCOMES[i].fishId;
+  }
+  return null;
 }
 
 /* ── Build fish guide ── */
@@ -200,6 +223,12 @@ var waterT    = 0;
 var rodBob    = 0;    // 0-1, rod tip dips on bite
 var ripples   = [];
 
+/* ── 預定結果系統 ── */
+var castOutcome  = null;   // fishId | null，下竿時決定
+var castWinner   = null;   // 必咬鉤的魚物件
+var castStart    = 0;      // 下竿時間戳
+var CAST_TIMEOUT = 20000;  // 20秒後自動收竿
+
 /* ── Spawn / update fish ── */
 function spawnFish(){
   if(fishPool.length >= 14) return;
@@ -217,6 +246,30 @@ function spawnFish(){
     alive: true,
   });
   fishPool[fishPool.length-1].baseY = fishPool[fishPool.length-1].y;
+}
+
+/* ── 生成必咬鉤的中獎魚 ── */
+function spawnWinnerFish(fishType){
+  var hx  = getHookX();
+  var dir = Math.random()>0.5 ? 1 : -1;
+  var startX = dir===1 ? -fishType.size*2-10 : GW+fishType.size*2+10;
+  /* Y 鎖定在釣鉤深度附近 */
+  var targetY = hookY + (Math.random()-0.5)*20;
+  targetY = Math.max(WATER_Y+fishType.size*2, Math.min(GH-fishType.size-10, targetY));
+  var fish = {
+    type:      fishType,
+    x:         startX,
+    y:         targetY,
+    baseY:     targetY,
+    dir:       dir,
+    phase:     Math.random()*Math.PI*2,
+    biting:    false,
+    biteStart: 0,
+    alive:     true,
+    willBite:  true,   // 此魚一定咬鉤
+  };
+  fishPool.push(fish);
+  castWinner = fish;
 }
 
 /* ── Bubbles ── */
@@ -445,13 +498,12 @@ function drawFishLabel(f){
 
   var labelText = (profit >= 0 ? '+' : '') + 'NT$' + profit.toLocaleString();
 
-  /* 顏色：虧損紅 / 小賺白 / 大賺綠 / 金魚金 */
+  /* 顏色：金魚金 / 高倍綠 / 中倍淺綠 / 基本白藍（所有魚皆正收益） */
   var col;
-  if(t.id === 'golden')      col = '#FFD700';
-  else if(profit <= 0)       col = '#ff7070';
-  else if(t.payout >= 4)     col = '#4ade80';
-  else if(t.payout >= 2)     col = '#86efac';
-  else                       col = '#d0f0ff';
+  if(t.id === 'golden')  col = '#FFD700';
+  else if(t.payout >= 4) col = '#4ade80';
+  else if(t.payout >= 2) col = '#86efac';
+  else                   col = '#d0f0ff';
 
   var fontSize = Math.max(9, Math.min(13, s * 0.5 + 6));
   var labelY   = f.y - s * 0.55 - 10;
@@ -594,6 +646,30 @@ function drawBiteUI(){
   gx.textAlign='left';
 }
 
+function drawCastTimer(){
+  if(gState!=='waiting' && gState!=='biting') return;
+  if(castStart<=0) return;
+  var elapsed=Date.now()-castStart;
+  var prog=Math.max(0, 1-elapsed/CAST_TIMEOUT);
+  var bw=GW-60, bh=5, bx=30, by=GH-12;
+  /* Track */
+  gx.fillStyle='rgba(255,255,255,0.08)';
+  gx.beginPath(); gx.roundRect(bx,by,bw,bh,3); gx.fill();
+  /* Fill colour shifts as time runs out */
+  var col=prog>0.5?'rgba(0,150,255,0.55)':prog>0.25?'rgba(255,150,0,0.65)':'rgba(255,60,60,0.75)';
+  gx.fillStyle=col;
+  gx.beginPath(); gx.roundRect(bx,by,Math.max(0,bw*prog),bh,3); gx.fill();
+  /* Countdown seconds */
+  var secs=Math.ceil(Math.max(0, CAST_TIMEOUT/1000-elapsed/1000));
+  gx.save();
+  gx.font='11px sans-serif';
+  gx.fillStyle='rgba(200,220,255,0.4)';
+  gx.textAlign='right';
+  gx.fillText(secs+'s', bx+bw, by-4);
+  gx.restore();
+  gx.textAlign='left';
+}
+
 function drawResult(msg, color, alpha){
   gx.save();
   gx.globalAlpha=alpha;
@@ -636,15 +712,15 @@ function loop(ts){
     /* 加大垂直擺動，讓魚更容易游到釣鉤深度 */
     f.y  = f.baseY + Math.sin(waterT*0.0018+f.phase)*(f.type.size*0.7 + 18);
 
-    /* Bite detection when waiting — X/Y 分開判斷，更寬鬆 */
+    /* Bite detection when waiting */
     if(gState==='waiting' && !biteFish){
       var adx = Math.abs(f.x - getHookX());
       var ady = Math.abs(f.y - hookY);
-      var xRange = f.type.size * 2.2 + 45;  /* 小魚 ~76px，大魚更大 */
-      var yRange = f.type.size * 1.8 + 55;  /* 小魚 ~80px，垂直寬鬆 */
+      var xRange = f.type.size * 2.2 + 45;
+      var yRange = f.type.size * 1.8 + 55;
       if(adx < xRange && ady < yRange){
-        /* 機率大幅提高：每幀 3%，魚游過期間約 40-60% 機率咬鉤 */
-        var chance = 0.03;
+        /* 中獎魚：高機率咬鉤；裝飾魚：幾乎不咬 */
+        var chance = f.willBite ? 0.12 : 0.001;
         if(Math.random()<chance){
           f.biting=true; f.biteStart=Date.now();
           biteFish=f; biteTime=Date.now();
@@ -666,6 +742,13 @@ function loop(ts){
   });
   /* Remove off-screen fish */
   fishPool=fishPool.filter(function(f){ return f.x>-f.type.size*4 && f.x<GW+f.type.size*4; });
+
+  /* Cast timeout: 20 秒後自動收竿 */
+  if(gState==='waiting' && castStart>0 && Date.now()-castStart>CAST_TIMEOUT){
+    gState='reeling';
+    document.getElementById('btnReel').style.display='none';
+    document.getElementById('btnReel').classList.remove('biting');
+  }
 
   /* Update hook Y */
   if(gState==='casting'){
@@ -700,6 +783,7 @@ function loop(ts){
   drawDockFisherman();
   drawLine();
   drawBiteUI();
+  drawCastTimer();
 
   if(gState==='result'&&resultMsg){
     var el=Date.now()-resultStart;
@@ -714,7 +798,7 @@ function loop(ts){
 
 function resetIdle(){
   gState='idle'; hookY=ROD_TIP.y; castBet=0; resultMsg='';
-  biteFish=null;
+  biteFish=null; castOutcome=null; castWinner=null; castStart=0;
   document.getElementById('btnCast').disabled=false;
   document.getElementById('btnReel').style.display='none';
   document.getElementById('btnReel').classList.remove('biting');
@@ -736,12 +820,23 @@ function castLine(){
   setBalance(getBalance()-bet);
   hookY=ROD_TIP.y;
   hookTargY=WATER_Y+(GH-WATER_Y)*(0.15+Math.random()*0.7);
-  biteFish=null;
+  biteFish=null; castWinner=null;
+  castOutcome=rollOutcome();   // 馬上決定這把的結果
+  castStart=Date.now();
   gState='casting';
   document.getElementById('btnCast').disabled=true;
   document.getElementById('btnReel').style.display='none';
   document.getElementById('btnReel').classList.remove('biting');
   for(var b=0;b<3;b++) spawnBubble();
+  /* 若命中某種魚，在 2–10 秒後讓它出現 */
+  if(castOutcome){
+    var delay=2000+Math.random()*8000;
+    setTimeout(function(){
+      if((gState==='waiting'||gState==='casting') && castOutcome && !castWinner){
+        spawnWinnerFish(typeById(castOutcome));
+      }
+    }, delay);
+  }
 }
 
 function reelIn(){
