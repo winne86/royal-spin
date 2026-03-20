@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>遊戲大廳 — Royal Spin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;background:#0A0A0A;color:#F0EDE5;overflow-x:hidden;min-height:100vh}
+#star-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.rs-nav,.lobby-hero,.lobby-body,.rs-foot{position:relative;z-index:1}
+
+/* NAV */
+.rs-nav{background:rgba(17,17,17,0.95);border-bottom:1px solid rgba(255,100,0,0.25);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.rs-logo{font-size:21px;font-weight:700;letter-spacing:2px;color:#FF6400;text-decoration:none;text-shadow:0 0 20px rgba(255,100,0,0.4)}
+.rs-logo span{color:#F0EDE5;font-weight:400}
+.nav-back{font-size:13px;color:rgba(240,237,229,0.45);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.15s}
+.nav-back:hover{color:#FF6400}
+.nav-balance{display:flex;align-items:center;gap:10px}
+.balance-chip{background:rgba(255,100,0,0.12);border:1px solid rgba(255,100,0,0.3);border-radius:20px;padding:6px 14px;font-size:13px;color:#FF6400;font-weight:600}
+.balance-label{font-size:11px;color:rgba(240,237,229,0.3)}
+.btn-topup{font-size:12px;padding:6px 14px;background:#FF6400;color:#0A0A0A;border:none;border-radius:7px;cursor:pointer;font-weight:600;font-family:inherit}
+
+/* HERO */
+.lobby-hero{padding:36px 28px 28px;background:linear-gradient(180deg,rgba(255,100,0,0.05) 0%,transparent 100%);border-bottom:1px solid rgba(255,100,0,0.1)}
+.lobby-hero-inner{max-width:1040px;margin:0 auto}
+.lobby-hero h1{font-size:28px;font-weight:700;margin-bottom:6px}
+.lobby-hero h1 em{color:#FF6400;font-style:normal}
+.lobby-hero p{font-size:14px;color:rgba(240,237,229,0.45);margin-bottom:22px}
+
+/* SEARCH + FILTER */
+.lobby-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.lobby-search{flex:1;min-width:200px;max-width:320px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:9px 14px;color:#F0EDE5;font-size:14px;font-family:inherit;outline:none;transition:border-color 0.15s}
+.lobby-search:focus{border-color:rgba(255,100,0,0.5)}
+.lobby-search::placeholder{color:rgba(240,237,229,0.2)}
+.cat-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.ctab{padding:7px 16px;border-radius:20px;font-size:13px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:rgba(240,237,229,0.45);cursor:pointer;font-family:inherit;transition:all 0.15s}
+.ctab.active,.ctab:hover{background:rgba(255,100,0,0.12);color:#FF6400;border-color:rgba(255,100,0,0.4)}
+
+/* BODY */
+.lobby-body{max-width:1040px;margin:0 auto;padding:28px}
+
+.section-title{font-size:16px;font-weight:600;color:#F0EDE5;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';width:3px;height:18px;background:linear-gradient(180deg,#FF6400,rgba(255,100,0,0.1));border-radius:2px;flex-shrink:0}
+.section-title em{color:#FF6400;font-style:normal}
+
+/* GAME GRID */
+.game-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:40px}
+.game-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;cursor:pointer;transition:all 0.22s;position:relative;text-decoration:none;display:block}
+.game-card:hover{border-color:rgba(255,100,0,0.5);transform:translateY(-5px);box-shadow:0 16px 40px rgba(0,0,0,0.5),0 0 24px rgba(255,100,0,0.1)}
+.game-card.playable{border-color:rgba(255,100,0,0.25)}
+.game-thumb{height:130px;display:flex;align-items:center;justify-content:center;font-size:52px;position:relative;overflow:hidden}
+.game-thumb .glow{position:absolute;inset:0;opacity:0;transition:opacity 0.3s;background:rgba(255,100,0,0.1)}
+.game-card:hover .glow{opacity:1}
+.gt-cards{background:linear-gradient(135deg,#1A0D00,#3D1F00)}
+.gt-slots{background:linear-gradient(135deg,#0A0A1E,#1A1040)}
+.gt-roulette{background:linear-gradient(135deg,#001A0D,#003320)}
+.gt-dice{background:linear-gradient(135deg,#1A1A00,#333300)}
+.gt-crash{background:linear-gradient(135deg,#1A0000,#3A0000)}
+.gt-fish{background:linear-gradient(135deg,#001020,#002040)}
+.badge{position:absolute;top:10px;left:10px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:5px}
+.badge-play{background:#FF6400;color:#0A0A0A}
+.badge-hot{background:rgba(163,45,45,0.9);color:#F09595;border:1px solid rgba(224,75,74,0.3)}
+.badge-new{background:rgba(24,95,165,0.9);color:#85B7EB;border:1px solid rgba(55,138,221,0.3)}
+.badge-soon{background:rgba(60,60,60,0.9);color:rgba(240,237,229,0.4)}
+.game-info{padding:13px 14px}
+.game-name{font-size:15px;font-weight:600;color:#F0EDE5;margin-bottom:3px}
+.game-meta{font-size:11px;color:rgba(240,237,229,0.35);display:flex;justify-content:space-between}
+.game-rtp{color:rgba(78,201,148,0.7)}
+.play-btn{display:block;margin:0 14px 13px;padding:9px;background:linear-gradient(90deg,#FF6400,#FF8C00);border:none;border-radius:8px;color:#0A0A0A;font-size:13px;font-weight:700;text-align:center;cursor:pointer;font-family:inherit;transition:all 0.15s;box-shadow:0 4px 14px rgba(255,100,0,0.35)}
+.play-btn:hover{box-shadow:0 4px 24px rgba(255,100,0,0.55);transform:translateY(-1px)}
+.soon-btn{display:block;margin:0 14px 13px;padding:9px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:rgba(240,237,229,0.25);font-size:13px;text-align:center;cursor:default}
+
+/* FOOTER */
+.rs-foot{background:#080808;border-top:1px solid rgba(255,100,0,0.08);padding:20px 28px;text-align:center;font-size:12px;color:rgba(240,237,229,0.2)}
+</style>
+</head>
+<body>
+<canvas id="star-canvas"></canvas>
+
+<nav class="rs-nav">
+  <a href="index.html" class="rs-logo">ROYAL<span>SPIN</span></a>
+  <div class="nav-balance">
+    <div>
+      <div class="balance-label">遊戲餘額</div>
+      <div class="balance-chip">NT$ <span id="navBalance">10,000</span></div>
+    </div>
+    <button class="btn-topup" onclick="topUp()">+ 儲值</button>
+  </div>
+</nav>
+
+<div class="lobby-hero">
+  <div class="lobby-hero-inner">
+    <h1>遊戲<em>大廳</em></h1>
+    <p>選擇你的遊戲，開始贏大獎</p>
+    <div class="lobby-controls">
+      <input class="lobby-search" type="text" placeholder="🔍 搜尋遊戲..." id="searchInput" oninput="filterGames()">
+      <div class="cat-tabs">
+        <button class="ctab active" data-cat="all">全部</button>
+        <button class="ctab" data-cat="card">桌牌</button>
+        <button class="ctab" data-cat="slot">老虎機</button>
+        <button class="ctab" data-cat="other">其他</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="lobby-body">
+  <div class="section-title">可玩遊戲 <em>（立即體驗）</em></div>
+  <div class="game-grid" id="gameGrid">
+
+    <!-- 比大小 -->
+    <div class="game-card playable" data-cat="card" data-name="比大小">
+      <div class="game-thumb gt-cards">
+        <span>🃏</span>
+        <div class="glow"></div>
+        <span class="badge badge-play">可玩</span>
+      </div>
+      <div class="game-info">
+        <div class="game-name">比大小</div>
+        <div class="game-meta"><span>Pragmatic · 桌牌</span><span class="game-rtp">RTP 96%</span></div>
+      </div>
+      <a class="play-btn" href="bigsmall.html">立即遊玩 →</a>
+    </div>
+
+    <!-- 老虎機 -->
+    <div class="game-card playable" data-cat="slot" data-name="幸運老虎機">
+      <div class="game-thumb gt-slots">
+        <span>🎰</span>
+        <div class="glow"></div>
+        <span class="badge badge-play">可玩</span>
+      </div>
+      <div class="game-info">
+        <div class="game-name">幸運老虎機</div>
+        <div class="game-meta"><span>Royal Original · 老虎機</span><span class="game-rtp">RTP 95%</span></div>
+      </div>
+      <a class="play-btn" href="slots.html">立即遊玩 →</a>
+    </div>
+
+    <!-- 以下為 Coming Soon -->
+    <div class="game-card" data-cat="card" data-name="歐洲輪盤">
+      <div class="game-thumb gt-roulette">
+        <span>🎡</span>
+        <div class="glow"></div>
+        <span class="badge badge-soon">即將上線</span>
+      </div>
+      <div class="game-info">
+        <div class="game-name">歐洲輪盤</div>
+        <div class="game-meta"><span>Pragmatic · 輪盤</span><span class="game-rtp">RTP 97.3%</span></div>
+      </div>
+      <div class="soon-btn">即將推出</div>
+    </div>
+
+    <div class="game-card" data-cat="card" data-name="德州撲克">
+      <div class="game-thumb gt-cards" style="background:linear-gradient(135deg,#0D1A00,#1A3300)">
+        <span>♠️</span>
+        <div class="glow"></div>
+        <span class="badge badge-soon">即將上線</span>
+      </div>
+      <div class="game-info">
+        <div class="game-name">德州撲克</div>
+        <div class="game-meta"><span>GGPoker · Live</span><span class="game-rtp">RTP 98%</span></div>
+      </div>
+      <div class="soon-btn">即將推出</div>
+    </div>
+
+    <div class="game-card" data-cat="other" data-name="Aviator Crash">
+      <div class="game-thumb gt-crash">
+        <span>🚀</span>
+        <div class="glow"></div>
+        <span class="badge badge-hot">HOT</span>
+      </div>
+      <div class="game-info">
+        <div class="game-name">Aviator Crash</div>
+        <div class="game-meta"><span>Spribe · 即時</span><span class="game-rtp">RTP 97%</span></div>
+      </div>
+      <div class="soon-btn">即將推出</div>
+    </div>
+
+    <div class="game-card" data-cat="other" data-name="捕魚大師">
+      <div class="game-thumb gt-fish">
+        <span>🐟</span>
+        <div class="glow"></div>
+        <span class="badge badge-new">NEW</span>
+      </div>
+      <div class="game-info">
+        <div class="game-name">捕魚大師</div>
+        <div class="game-meta"><span>JDB · 捕魚</span><span class="game-rtp">RTP 96%</span></div>
+      </div>
+      <div class="soon-btn">即將推出</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="rs-foot">© 2026 Royal Spin · 18 歲以上方可參與 · 請理性娛樂</div>
+
+<script>
+/* ── 星星背景 ── */
+(function(){
+  var c=document.getElementById('star-canvas'),ctx=c.getContext('2d'),stars=[],sparks=[];
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;}
+  resize(); window.addEventListener('resize',resize);
+  for(var i=0;i<180;i++){var big=Math.random()>0.88;stars.push({x:Math.random(),y:Math.random(),r:big?Math.random()*0.4+0.4:Math.random()*0.9+0.2,speed:Math.random()*1.25+0.4,phase:Math.random()*Math.PI*2,big:big,orange:Math.random()>0.82});}
+  setInterval(function(){sparks.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*2+1,life:1,decay:Math.random()*0.035+0.02,orange:Math.random()>0.7});},240);
+  function draw(){ctx.clearRect(0,0,c.width,c.height);var t=Date.now()/1000;
+    stars.forEach(function(s){var raw=Math.sin(t*s.speed+s.phase);var alpha=raw>0?0.08+0.92*raw*raw:0.08;var px=s.x*c.width,py=s.y*c.height;var col=s.orange?'255,140,50':'255,255,255';ctx.beginPath();ctx.arc(px,py,s.r,0,Math.PI*2);ctx.fillStyle='rgba('+col+','+alpha+')';ctx.fill();if(s.big&&alpha>0.5){var len=s.r*(3+alpha*5);ctx.save();ctx.globalAlpha=alpha*0.55;ctx.strokeStyle='rgba('+col+',1)';ctx.lineWidth=0.7;ctx.beginPath();ctx.moveTo(px-len,py);ctx.lineTo(px+len,py);ctx.moveTo(px,py-len);ctx.lineTo(px,py+len);ctx.stroke();ctx.restore();}});
+    sparks=sparks.filter(function(sp){sp.life-=sp.decay;if(sp.life<=0)return false;var col=sp.orange?'255,140,50':'255,255,255';ctx.save();ctx.globalAlpha=sp.life;ctx.beginPath();ctx.arc(sp.x,sp.y,sp.r*sp.life,0,Math.PI*2);ctx.fillStyle='rgba('+col+',1)';ctx.fill();ctx.strokeStyle='rgba('+col+',1)';ctx.lineWidth=0.6;var l=sp.r*3*sp.life;ctx.beginPath();ctx.moveTo(sp.x-l,sp.y);ctx.lineTo(sp.x+l,sp.y);ctx.moveTo(sp.x,sp.y-l);ctx.lineTo(sp.x,sp.y+l);ctx.stroke();ctx.restore();return true;});
+    requestAnimationFrame(draw);}
+  draw();
+})();
+
+/* ── 餘額 ── */
+function getBalance(){ return parseInt(localStorage.getItem('rs_balance')||'10000'); }
+function setBalance(v){ localStorage.setItem('rs_balance', v); updateBalanceDisplay(); }
+function updateBalanceDisplay(){ document.getElementById('navBalance').textContent = getBalance().toLocaleString(); }
+function topUp(){ setBalance(getBalance()+5000); alert('已儲值 NT$5,000！'); }
+updateBalanceDisplay();
+
+/* ── 搜尋 & 分類 ── */
+var currentCat = 'all';
+document.querySelectorAll('.ctab').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.ctab').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    currentCat = btn.dataset.cat;
+    filterGames();
+  });
+});
+function filterGames(){
+  var q = document.getElementById('searchInput').value.toLowerCase();
+  document.querySelectorAll('.game-card').forEach(function(card){
+    var nameMatch = card.dataset.name.toLowerCase().includes(q);
+    var catMatch = currentCat==='all' || card.dataset.cat===currentCat;
+    card.style.display = (nameMatch && catMatch) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>比大小 — Royal Spin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;background:#0A0A0A;color:#F0EDE5;min-height:100vh;display:flex;flex-direction:column}
+#star-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.rs-nav,.game-wrap,.rs-foot{position:relative;z-index:1}
+
+/* NAV */
+.rs-nav{background:rgba(17,17,17,0.95);border-bottom:1px solid rgba(255,100,0,0.25);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.rs-logo{font-size:18px;font-weight:700;letter-spacing:2px;color:#FF6400;text-decoration:none}
+.rs-logo span{color:#F0EDE5;font-weight:400}
+.nav-right{display:flex;align-items:center;gap:12px}
+.balance-pill{background:rgba(255,100,0,0.12);border:1px solid rgba(255,100,0,0.3);border-radius:20px;padding:5px 14px;font-size:13px;color:#FF6400;font-weight:600}
+.nav-back{font-size:13px;color:rgba(240,237,229,0.4);text-decoration:none;transition:color 0.15s}
+.nav-back:hover{color:#FF6400}
+
+/* GAME WRAP */
+.game-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 16px}
+.game-box{width:100%;max-width:480px}
+
+/* TITLE */
+.game-title{text-align:center;margin-bottom:28px}
+.game-title h1{font-size:26px;font-weight:700;margin-bottom:4px}
+.game-title h1 em{color:#FF6400;font-style:normal}
+.game-title p{font-size:13px;color:rgba(240,237,229,0.35)}
+
+/* CARD TABLE */
+.card-table{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:28px;margin-bottom:20px;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.cards-row{display:flex;gap:20px;align-items:center;justify-content:center;margin-bottom:20px}
+.card{width:90px;height:130px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:32px;font-weight:800;position:relative;transition:transform 0.3s;user-select:none;flex-shrink:0}
+.card-front{background:#fff;color:#1A1A1A;border:2px solid rgba(255,255,255,0.9);box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+.card-front.red{color:#D62828}
+.card-back{background:linear-gradient(135deg,#1A0D00,#FF6400 200%);border:2px solid rgba(255,100,0,0.4);box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+.card-back::after{content:'🂠';font-size:40px;opacity:0.3}
+.card-suit{position:absolute;top:8px;left:10px;font-size:13px;line-height:1}
+.card-suit-br{position:absolute;bottom:8px;right:10px;font-size:13px;line-height:1;transform:rotate(180deg)}
+.card-vs{font-size:20px;color:rgba(255,100,0,0.5);font-weight:700}
+.result-msg{font-size:18px;font-weight:700;min-height:28px;text-align:center}
+.result-win{color:#4EC994}
+.result-lose{color:#FF7070}
+.result-draw{color:#FFB800}
+
+/* BET CONTROLS */
+.bet-panel{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:20px}
+.bet-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.bet-label{font-size:13px;color:rgba(240,237,229,0.45);flex-shrink:0}
+.bet-input{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:9px;padding:9px 13px;color:#F0EDE5;font-size:16px;font-weight:600;font-family:inherit;outline:none;text-align:center;transition:border-color 0.15s}
+.bet-input:focus{border-color:rgba(255,100,0,0.5)}
+.bet-chips{display:flex;gap:6px}
+.chip{padding:5px 11px;background:rgba(255,100,0,0.1);border:1px solid rgba(255,100,0,0.25);border-radius:20px;font-size:12px;color:#FF6400;cursor:pointer;font-family:inherit;transition:all 0.15s;font-weight:600}
+.chip:hover{background:rgba(255,100,0,0.2)}
+.action-btns{display:flex;gap:10px}
+.btn-big{flex:1;padding:14px;background:linear-gradient(135deg,#FF6400,#FF8C00);border:none;border-radius:10px;color:#0A0A0A;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;box-shadow:0 4px 16px rgba(255,100,0,0.35)}
+.btn-big:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(255,100,0,0.5)}
+.btn-small{flex:1;padding:14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#F0EDE5;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s}
+.btn-small:hover:not(:disabled){background:rgba(255,255,255,0.1);transform:translateY(-2px)}
+.btn-big:disabled,.btn-small:disabled{opacity:0.4;cursor:default;transform:none}
+.btn-deal{width:100%;padding:13px;background:#FF6400;border:none;border-radius:10px;color:#0A0A0A;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;margin-top:10px;box-shadow:0 4px 14px rgba(255,100,0,0.3)}
+.btn-deal:hover{background:#FF7720}
+.btn-deal:disabled{opacity:0.4;cursor:default}
+
+/* HISTORY */
+.history{margin-top:16px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:28px}
+.hist-item{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.hist-w{background:rgba(78,201,148,0.2);color:#4EC994;border:1px solid rgba(78,201,148,0.3)}
+.hist-l{background:rgba(255,112,112,0.2);color:#FF7070;border:1px solid rgba(255,112,112,0.3)}
+.hist-d{background:rgba(255,184,0,0.2);color:#FFB800;border:1px solid rgba(255,184,0,0.3)}
+
+/* PAYTABLE */
+.paytable{background:rgba(255,100,0,0.06);border:1px solid rgba(255,100,0,0.15);border-radius:10px;padding:12px 16px;margin-top:14px;font-size:12px;color:rgba(240,237,229,0.45);text-align:center}
+.paytable strong{color:#FF6400}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A1A2E;border-radius:10px;padding:12px 24px;font-size:14px;color:#fff;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:#0A3D27;color:#4EC994}
+.toast.err{background:#3D0A0A;color:#FF7070}
+
+.rs-foot{background:#080808;border-top:1px solid rgba(255,100,0,0.08);padding:16px;text-align:center;font-size:12px;color:rgba(240,237,229,0.2)}
+</style>
+</head>
+<body>
+<canvas id="star-canvas"></canvas>
+
+<nav class="rs-nav">
+  <a href="index.html" class="rs-logo">ROYAL<span>SPIN</span></a>
+  <div class="nav-right">
+    <div class="balance-pill">NT$ <span id="navBal">0</span></div>
+    <a href="lobby.html" class="nav-back">← 遊戲大廳</a>
+  </div>
+</nav>
+
+<div class="game-wrap">
+  <div class="game-box">
+    <div class="game-title">
+      <h1>🃏 比<em>大小</em></h1>
+      <p>猜下一張牌比現在的大還是小</p>
+    </div>
+
+    <div class="card-table">
+      <div class="cards-row">
+        <div class="card card-back" id="cardLeft"></div>
+        <div class="card-vs">VS</div>
+        <div class="card card-back" id="cardRight"></div>
+      </div>
+      <div class="result-msg" id="resultMsg">按「發牌」開始遊戲</div>
+    </div>
+
+    <div class="bet-panel">
+      <div class="bet-row">
+        <span class="bet-label">下注金額</span>
+        <input class="bet-input" type="number" id="betInput" value="100" min="10" max="50000">
+        <div class="bet-chips">
+          <button class="chip" onclick="setBet(100)">100</button>
+          <button class="chip" onclick="setBet(500)">500</button>
+          <button class="chip" onclick="setBet(1000)">1K</button>
+          <button class="chip" onclick="setBet(5000)">5K</button>
+        </div>
+      </div>
+      <div class="action-btns">
+        <button class="btn-big" id="btnBig" onclick="guess('big')" disabled>大 ▲</button>
+        <button class="btn-small" id="btnSmall" onclick="guess('small')" disabled>小 ▼</button>
+      </div>
+      <button class="btn-deal" id="btnDeal" onclick="deal()">發牌</button>
+    </div>
+
+    <div class="history" id="history"></div>
+
+    <div class="paytable">
+      猜對 <strong>+NT$ 下注額</strong> &nbsp;｜&nbsp; 猜錯 <strong>-NT$ 下注額</strong> &nbsp;｜&nbsp; 平局 <strong>退回下注</strong>
+    </div>
+  </div>
+</div>
+
+<div class="rs-foot">© 2026 Royal Spin · 本遊戲為娛樂性質，請理性參與</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── 星星 ── */
+(function(){var c=document.getElementById('star-canvas'),ctx=c.getContext('2d'),stars=[],sparks=[];function resize(){c.width=window.innerWidth;c.height=window.innerHeight;}resize();window.addEventListener('resize',resize);for(var i=0;i<150;i++){var big=Math.random()>0.88;stars.push({x:Math.random(),y:Math.random(),r:big?Math.random()*0.4+0.4:Math.random()*0.9+0.2,speed:Math.random()*1.25+0.4,phase:Math.random()*Math.PI*2,big:big,orange:Math.random()>0.82});}setInterval(function(){sparks.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*2+1,life:1,decay:Math.random()*0.04+0.02,orange:Math.random()>0.7});},240);function draw(){ctx.clearRect(0,0,c.width,c.height);var t=Date.now()/1000;stars.forEach(function(s){var raw=Math.sin(t*s.speed+s.phase);var alpha=raw>0?0.08+0.92*raw*raw:0.08;var px=s.x*c.width,py=s.y*c.height;var col=s.orange?'255,140,50':'255,255,255';ctx.beginPath();ctx.arc(px,py,s.r,0,Math.PI*2);ctx.fillStyle='rgba('+col+','+alpha+')';ctx.fill();if(s.big&&alpha>0.5){var len=s.r*(3+alpha*4);ctx.save();ctx.globalAlpha=alpha*0.5;ctx.strokeStyle='rgba('+col+',1)';ctx.lineWidth=0.7;ctx.beginPath();ctx.moveTo(px-len,py);ctx.lineTo(px+len,py);ctx.moveTo(px,py-len);ctx.lineTo(px,py+len);ctx.stroke();ctx.restore();}});sparks=sparks.filter(function(sp){sp.life-=sp.decay;if(sp.life<=0)return false;var col=sp.orange?'255,140,50':'255,255,255';ctx.save();ctx.globalAlpha=sp.life;ctx.beginPath();ctx.arc(sp.x,sp.y,sp.r*sp.life,0,Math.PI*2);ctx.fillStyle='rgba('+col+',1)';ctx.fill();ctx.restore();return true;});requestAnimationFrame(draw);}draw();})();
+
+/* ── GAME LOGIC ── */
+var VALUES = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+var NUMS   = {A:1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,J:11,Q:12,K:13};
+var SUITS  = ['♠','♥','♦','♣'];
+var RED    = ['♥','♦'];
+
+var currentCard = null;
+var phase = 'idle'; // idle | waiting
+var history = [];
+
+function getBalance(){ return parseInt(localStorage.getItem('rs_balance')||'10000'); }
+function setBalance(v){ localStorage.setItem('rs_balance', Math.max(0,v)); updateBal(); }
+function updateBal(){ document.getElementById('navBal').textContent = getBalance().toLocaleString(); }
+updateBal();
+
+function setBet(n){ document.getElementById('betInput').value = n; }
+function getBet(){
+  var v = parseInt(document.getElementById('betInput').value)||0;
+  if(v < 10){ showToast('最低下注 NT$10','err'); return 0; }
+  if(v > getBalance()){ showToast('餘額不足','err'); return 0; }
+  return v;
+}
+
+function randCard(){
+  return { v: VALUES[Math.floor(Math.random()*13)], s: SUITS[Math.floor(Math.random()*4)] };
+}
+
+function renderCard(el, card, hidden){
+  if(hidden){
+    el.className='card card-back'; el.innerHTML=''; return;
+  }
+  var isRed = RED.includes(card.s);
+  el.className='card card-front'+(isRed?' red':'');
+  el.innerHTML='<span class="card-suit">'+card.s+'</span>'
+    +'<span style="font-size:28px;font-weight:800">'+card.v+'</span>'
+    +'<span class="card-suit-br">'+card.s+'</span>';
+}
+
+function deal(){
+  if(getBet()===0) return;
+  currentCard = randCard();
+  renderCard(document.getElementById('cardLeft'), currentCard, false);
+  renderCard(document.getElementById('cardRight'), null, true);
+  document.getElementById('resultMsg').textContent = '猜下一張：大還是小？';
+  document.getElementById('resultMsg').className = 'result-msg';
+  document.getElementById('btnBig').disabled = false;
+  document.getElementById('btnSmall').disabled = false;
+  document.getElementById('btnDeal').disabled = true;
+  phase = 'waiting';
+}
+
+function guess(dir){
+  if(phase !== 'waiting') return;
+  var bet = getBet(); if(!bet) return;
+  var nextCard = randCard();
+  renderCard(document.getElementById('cardRight'), nextCard, false);
+  document.getElementById('btnBig').disabled = true;
+  document.getElementById('btnSmall').disabled = true;
+  document.getElementById('btnDeal').disabled = false;
+  phase = 'idle';
+
+  var cur = NUMS[currentCard.v], nxt = NUMS[nextCard.v];
+  var win, msg, cls, histCls;
+
+  if(cur === nxt){ win=0; msg='平局！退回下注 NT$'+bet.toLocaleString(); cls='result-draw'; histCls='hist-d'; }
+  else if((dir==='big' && nxt>cur)||(dir==='small' && nxt<cur)){
+    win=bet; msg='🎉 猜對了！贏得 NT$'+bet.toLocaleString(); cls='result-win'; histCls='hist-w';
+    setBalance(getBalance()+bet); showToast('贏得 NT$'+bet.toLocaleString(),'ok');
+  } else {
+    win=-bet; msg='😢 猜錯了！輸掉 NT$'+bet.toLocaleString(); cls='result-lose'; histCls='hist-l';
+    setBalance(getBalance()-bet); showToast('輸掉 NT$'+bet.toLocaleString(),'err');
+  }
+
+  document.getElementById('resultMsg').textContent = msg;
+  document.getElementById('resultMsg').className = 'result-msg '+cls;
+  history.unshift(histCls);
+  if(history.length>20) history.pop();
+  renderHistory();
+  currentCard = nextCard;
+}
+
+function renderHistory(){
+  var labels = {'hist-w':'W','hist-l':'L','hist-d':'D'};
+  document.getElementById('history').innerHTML = history.map(function(h){
+    return '<div class="hist-item '+h+'">'+labels[h]+'</div>';
+  }).join('');
+}
+
+/* ── TOAST ── */
+function showToast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+</script>
+</body>
+</html>

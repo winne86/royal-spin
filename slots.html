@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>幸運老虎機 — Royal Spin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;background:#0A0A0A;color:#F0EDE5;min-height:100vh;display:flex;flex-direction:column}
+#star-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.rs-nav,.game-wrap,.rs-foot{position:relative;z-index:1}
+
+/* NAV */
+.rs-nav{background:rgba(17,17,17,0.95);border-bottom:1px solid rgba(255,100,0,0.25);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.rs-logo{font-size:18px;font-weight:700;letter-spacing:2px;color:#FF6400;text-decoration:none}
+.rs-logo span{color:#F0EDE5;font-weight:400}
+.nav-right{display:flex;align-items:center;gap:12px}
+.balance-pill{background:rgba(255,100,0,0.12);border:1px solid rgba(255,100,0,0.3);border-radius:20px;padding:5px 14px;font-size:13px;color:#FF6400;font-weight:600}
+.nav-back{font-size:13px;color:rgba(240,237,229,0.4);text-decoration:none;transition:color 0.15s}
+.nav-back:hover{color:#FF6400}
+
+/* GAME WRAP */
+.game-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 16px}
+.game-box{width:100%;max-width:500px}
+
+/* TITLE */
+.game-title{text-align:center;margin-bottom:24px}
+.game-title h1{font-size:26px;font-weight:700;margin-bottom:4px}
+.game-title h1 em{color:#FF6400;font-style:normal}
+.game-title p{font-size:13px;color:rgba(240,237,229,0.35)}
+
+/* SLOT MACHINE */
+.slot-machine{background:linear-gradient(180deg,rgba(60,30,0,0.6),rgba(30,15,0,0.8));border:2px solid rgba(255,100,0,0.4);border-radius:24px;padding:24px;margin-bottom:18px;box-shadow:0 0 40px rgba(255,100,0,0.1),inset 0 0 30px rgba(0,0,0,0.5)}
+
+/* LIGHTS */
+.slot-lights{display:flex;justify-content:center;gap:8px;margin-bottom:16px}
+.light{width:10px;height:10px;border-radius:50%;background:#FF6400;box-shadow:0 0 6px #FF6400;animation:blink 1s infinite}
+.light:nth-child(2){animation-delay:0.2s}
+.light:nth-child(3){animation-delay:0.4s}
+.light:nth-child(4){animation-delay:0.6s}
+.light:nth-child(5){animation-delay:0.8s}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 8px #FF6400}50%{opacity:0.2;box-shadow:none}}
+
+/* REELS */
+.reels-wrap{background:#0A0A0A;border-radius:14px;padding:12px;margin-bottom:18px;border:1px solid rgba(255,100,0,0.2);position:relative;overflow:hidden}
+.payline{position:absolute;top:50%;left:0;right:0;height:2px;background:rgba(255,100,0,0.5);transform:translateY(-50%);pointer-events:none;z-index:10;box-shadow:0 0 8px rgba(255,100,0,0.6)}
+.reels{display:flex;gap:8px;justify-content:center}
+.reel{width:110px;height:120px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;overflow:hidden;position:relative}
+.reel-inner{display:flex;flex-direction:column;align-items:center;transition:transform 0s}
+.reel-inner.spinning{animation:spin-reel 0.08s linear infinite}
+@keyframes spin-reel{0%{transform:translateY(0)}100%{transform:translateY(-120px)}}
+.reel-sym{width:110px;height:120px;display:flex;align-items:center;justify-content:center;font-size:52px;flex-shrink:0}
+
+/* WIN FLASH */
+.reel.win-flash{animation:flash 0.3s ease 3}
+@keyframes flash{0%,100%{background:rgba(255,100,0,0.05)}50%{background:rgba(255,215,0,0.2);box-shadow:0 0 20px rgba(255,215,0,0.4)}}
+
+/* RESULT */
+.slot-result{text-align:center;min-height:32px;margin-bottom:4px}
+.result-text{font-size:18px;font-weight:700}
+.result-win{color:#FFD700;text-shadow:0 0 16px rgba(255,215,0,0.5)}
+.result-lose{color:rgba(240,237,229,0.3);font-size:14px}
+
+/* BET CONTROLS */
+.bet-panel{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:18px}
+.bet-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.bet-label{font-size:13px;color:rgba(240,237,229,0.45);flex-shrink:0}
+.bet-input{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:9px;padding:9px 13px;color:#F0EDE5;font-size:16px;font-weight:600;font-family:inherit;outline:none;text-align:center;transition:border-color 0.15s}
+.bet-input:focus{border-color:rgba(255,100,0,0.5)}
+.bet-chips{display:flex;gap:6px}
+.chip{padding:5px 11px;background:rgba(255,100,0,0.1);border:1px solid rgba(255,100,0,0.25);border-radius:20px;font-size:12px;color:#FF6400;cursor:pointer;font-family:inherit;transition:all 0.15s;font-weight:600}
+.chip:hover{background:rgba(255,100,0,0.2)}
+.btn-spin{width:100%;padding:16px;background:linear-gradient(90deg,#FF6400,#FF8C00);border:none;border-radius:12px;color:#0A0A0A;font-size:18px;font-weight:800;cursor:pointer;font-family:inherit;transition:all 0.2s;box-shadow:0 4px 20px rgba(255,100,0,0.4);letter-spacing:1px}
+.btn-spin:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 30px rgba(255,100,0,0.55)}
+.btn-spin:disabled{opacity:0.5;cursor:default;transform:none;background:rgba(255,100,0,0.3)}
+
+/* PAYTABLE */
+.paytable{margin-top:16px;background:rgba(255,100,0,0.05);border:1px solid rgba(255,100,0,0.15);border-radius:12px;padding:14px 16px}
+.pt-title{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,100,0,0.7);margin-bottom:10px;font-weight:600}
+.pt-rows{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.pt-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 0}
+.pt-syms{font-size:16px;letter-spacing:2px}
+.pt-mult{color:#FF6400;font-weight:700}
+.pt-row.jackpot .pt-mult{color:#FFD700;font-size:14px}
+.pt-row.jackpot .pt-syms{font-size:18px}
+
+/* HISTORY */
+.history{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:12px;min-height:24px}
+.hist-item{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}
+.hist-w{background:rgba(255,215,0,0.15);color:#FFD700;border:1px solid rgba(255,215,0,0.3)}
+.hist-l{background:rgba(255,112,112,0.1);color:rgba(255,112,112,0.5);border:1px solid rgba(255,112,112,0.15)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A1A2E;border-radius:10px;padding:12px 24px;font-size:14px;color:#fff;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:#3D2E00;color:#FFD700}
+.toast.big{background:#1A0D00;color:#FF6400;font-size:18px;font-weight:700}
+.toast.err{background:#3D0A0A;color:#FF7070}
+
+.rs-foot{background:#080808;border-top:1px solid rgba(255,100,0,0.08);padding:16px;text-align:center;font-size:12px;color:rgba(240,237,229,0.2)}
+</style>
+</head>
+<body>
+<canvas id="star-canvas"></canvas>
+
+<nav class="rs-nav">
+  <a href="index.html" class="rs-logo">ROYAL<span>SPIN</span></a>
+  <div class="nav-right">
+    <div class="balance-pill">NT$ <span id="navBal">0</span></div>
+    <a href="lobby.html" class="nav-back">← 遊戲大廳</a>
+  </div>
+</nav>
+
+<div class="game-wrap">
+  <div class="game-box">
+    <div class="game-title">
+      <h1>🎰 幸運<em>老虎機</em></h1>
+      <p>轉動滾輪，贏取大獎！</p>
+    </div>
+
+    <div class="slot-machine">
+      <div class="slot-lights">
+        <div class="light"></div><div class="light"></div><div class="light"></div>
+        <div class="light"></div><div class="light"></div>
+      </div>
+
+      <div class="reels-wrap">
+        <div class="payline"></div>
+        <div class="reels">
+          <div class="reel" id="reel0"><div class="reel-inner" id="inner0"><div class="reel-sym">🍒</div></div></div>
+          <div class="reel" id="reel1"><div class="reel-inner" id="inner1"><div class="reel-sym">🍒</div></div></div>
+          <div class="reel" id="reel2"><div class="reel-inner" id="inner2"><div class="reel-sym">🍒</div></div></div>
+        </div>
+      </div>
+
+      <div class="slot-result">
+        <div class="result-text result-lose" id="resultText">按下 SPIN 開始！</div>
+      </div>
+    </div>
+
+    <div class="bet-panel">
+      <div class="bet-row">
+        <span class="bet-label">下注</span>
+        <input class="bet-input" type="number" id="betInput" value="100" min="10" max="50000">
+        <div class="bet-chips">
+          <button class="chip" onclick="setBet(50)">50</button>
+          <button class="chip" onclick="setBet(100)">100</button>
+          <button class="chip" onclick="setBet(500)">500</button>
+          <button class="chip" onclick="setBet(1000)">1K</button>
+        </div>
+      </div>
+      <button class="btn-spin" id="btnSpin" onclick="spin()">🎰 &nbsp; S P I N</button>
+    </div>
+
+    <div class="paytable">
+      <div class="pt-title">賠率表</div>
+      <div class="pt-rows">
+        <div class="pt-row jackpot"><span class="pt-syms">7️⃣7️⃣7️⃣</span><span class="pt-mult">× 100 🏆</span></div>
+        <div class="pt-row"><span class="pt-syms">💎💎💎</span><span class="pt-mult">× 50</span></div>
+        <div class="pt-row"><span class="pt-syms">⭐⭐⭐</span><span class="pt-mult">× 20</span></div>
+        <div class="pt-row"><span class="pt-syms">🍇🍇🍇</span><span class="pt-mult">× 10</span></div>
+        <div class="pt-row"><span class="pt-syms">🍊🍊🍊</span><span class="pt-mult">× 6</span></div>
+        <div class="pt-row"><span class="pt-syms">🍋🍋🍋</span><span class="pt-mult">× 4</span></div>
+        <div class="pt-row"><span class="pt-syms">🍒🍒🍒</span><span class="pt-mult">× 3</span></div>
+        <div class="pt-row"><span class="pt-syms">任意兩顆相同</span><span class="pt-mult">× 1.2</span></div>
+      </div>
+    </div>
+
+    <div class="history" id="history"></div>
+  </div>
+</div>
+
+<div class="rs-foot">© 2026 Royal Spin · 本遊戲為娛樂性質，請理性參與</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── 星星 ── */
+(function(){var c=document.getElementById('star-canvas'),ctx=c.getContext('2d'),stars=[],sparks=[];function resize(){c.width=window.innerWidth;c.height=window.innerHeight;}resize();window.addEventListener('resize',resize);for(var i=0;i<150;i++){var big=Math.random()>0.88;stars.push({x:Math.random(),y:Math.random(),r:big?Math.random()*0.4+0.4:Math.random()*0.9+0.2,speed:Math.random()*1.25+0.4,phase:Math.random()*Math.PI*2,big:big,orange:Math.random()>0.82});}setInterval(function(){sparks.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*2+1,life:1,decay:Math.random()*0.04+0.02,orange:Math.random()>0.7});},240);function draw(){ctx.clearRect(0,0,c.width,c.height);var t=Date.now()/1000;stars.forEach(function(s){var raw=Math.sin(t*s.speed+s.phase);var alpha=raw>0?0.08+0.92*raw*raw:0.08;var px=s.x*c.width,py=s.y*c.height;var col=s.orange?'255,140,50':'255,255,255';ctx.beginPath();ctx.arc(px,py,s.r,0,Math.PI*2);ctx.fillStyle='rgba('+col+','+alpha+')';ctx.fill();if(s.big&&alpha>0.5){var len=s.r*(3+alpha*4);ctx.save();ctx.globalAlpha=alpha*0.5;ctx.strokeStyle='rgba('+col+',1)';ctx.lineWidth=0.7;ctx.beginPath();ctx.moveTo(px-len,py);ctx.lineTo(px+len,py);ctx.moveTo(px,py-len);ctx.lineTo(px,py+len);ctx.stroke();ctx.restore();}});sparks=sparks.filter(function(sp){sp.life-=sp.decay;if(sp.life<=0)return false;var col=sp.orange?'255,140,50':'255,255,255';ctx.save();ctx.globalAlpha=sp.life;ctx.beginPath();ctx.arc(sp.x,sp.y,sp.r*sp.life,0,Math.PI*2);ctx.fillStyle='rgba('+col+',1)';ctx.fill();ctx.restore();return true;});requestAnimationFrame(draw);}draw();})();
+
+/* ── SLOT LOGIC ── */
+var SYMS = ['🍒','🍒','🍒','🍋','🍋','🍊','🍊','🍇','⭐','💎','7️⃣'];
+var PAYTABLE = {'🍒🍒🍒':3,'🍋🍋🍋':4,'🍊🍊🍊':6,'🍇🍇🍇':10,'⭐⭐⭐':20,'💎💎💎':50,'7️⃣7️⃣7️⃣':100};
+var spinning = false;
+var history = [];
+
+function getBalance(){ return parseInt(localStorage.getItem('rs_balance')||'10000'); }
+function setBalance(v){ localStorage.setItem('rs_balance', Math.max(0,v)); updateBal(); }
+function updateBal(){ document.getElementById('navBal').textContent = getBalance().toLocaleString(); }
+updateBal();
+function setBet(n){ document.getElementById('betInput').value = n; }
+function getBet(){
+  var v = parseInt(document.getElementById('betInput').value)||0;
+  if(v < 10){ showToast('最低下注 NT$10','err'); return 0; }
+  if(v > getBalance()){ showToast('餘額不足','err'); return 0; }
+  return v;
+}
+
+function randSym(){ return SYMS[Math.floor(Math.random()*SYMS.length)]; }
+
+function setReel(idx, sym){
+  var inner = document.getElementById('inner'+idx);
+  inner.innerHTML = '<div class="reel-sym">'+sym+'</div>';
+}
+
+function spin(){
+  if(spinning) return;
+  var bet = getBet(); if(!bet) return;
+  spinning = true;
+  document.getElementById('btnSpin').disabled = true;
+  document.getElementById('resultText').textContent = '🎲 旋轉中...';
+  document.getElementById('resultText').className = 'result-text result-lose';
+  for(var i=0;i<3;i++) document.getElementById('reel'+i).classList.remove('win-flash');
+
+  /* 動畫滾動 */
+  var frames = [0,0,0];
+  var intervals = [null,null,null];
+  var results = [randSym(), randSym(), randSym()];
+  var stopTimes = [900, 1300, 1700];
+
+  for(let r=0; r<3; r++){
+    intervals[r] = setInterval(function(){
+      setReel(r, SYMS[Math.floor(Math.random()*SYMS.length)]);
+    }, 80);
+    setTimeout(function(){
+      clearInterval(intervals[r]);
+      setReel(r, results[r]);
+    }, stopTimes[r]);
+  }
+
+  setTimeout(function(){
+    evaluate(results, bet);
+    spinning = false;
+    document.getElementById('btnSpin').disabled = false;
+  }, 1900);
+}
+
+function evaluate(results, bet){
+  var key = results.join('');
+  var mult = PAYTABLE[key] || 0;
+  var twoMatch = (results[0]===results[1]||results[1]===results[2]||results[0]===results[2]) && !mult;
+  var winAmt = 0;
+  var msg = '', cls = 'result-lose';
+
+  if(mult){
+    winAmt = Math.round(bet * mult);
+    setBalance(getBalance() + winAmt);
+    msg = '🎉 ' + results.join('') + '  贏得 NT$' + winAmt.toLocaleString() + '！';
+    cls = 'result-win';
+    for(var i=0;i<3;i++) document.getElementById('reel'+i).classList.add('win-flash');
+    if(mult >= 50) showToast('🏆 JACKPOT！贏得 NT$'+winAmt.toLocaleString(),'big');
+    else showToast('贏得 NT$'+winAmt.toLocaleString(),'ok');
+    history.unshift('win');
+  } else if(twoMatch){
+    winAmt = Math.round(bet * 1.2);
+    setBalance(getBalance() + winAmt - bet);
+    msg = '✨ 兩顆相同！NT$' + winAmt.toLocaleString();
+    cls = 'result-win';
+    history.unshift('win');
+  } else {
+    setBalance(getBalance() - bet);
+    msg = '沒中獎，再試一次！';
+    history.unshift('lose');
+  }
+
+  if(!twoMatch || mult) {} /* already handled */
+  document.getElementById('resultText').textContent = msg;
+  document.getElementById('resultText').className = 'result-text '+cls;
+  if(history.length>20) history.pop();
+  renderHistory();
+}
+
+function renderHistory(){
+  document.getElementById('history').innerHTML = history.slice(0,20).map(function(h){
+    return h==='win'
+      ? '<div class="hist-item hist-w">WIN</div>'
+      : '<div class="hist-item hist-l">MISS</div>';
+  }).join('');
+}
+
+function showToast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
+</script>
+</body>
+</html>
